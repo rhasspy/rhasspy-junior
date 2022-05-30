@@ -1,0 +1,43 @@
+[microphone]
+run = "arecord -r 16000 -c 1 -f S16_LE -t raw"
+chunk_bytes = 2048
+
+[hotword]
+model = "data/wake_precise/hey_mycroft.tflite"
+sensitivity = 0.8
+trigger_level = 4
+chunk_size = 2048
+
+[vad]
+model = "data/vad_silero/silero_vad.onnx"
+threshold = 0.2
+sample_rate = 16000
+chunk_size = 960
+skip_seconds = 0
+min_seconds = 1
+max_seconds = 30
+speech_seconds = 0.3
+silence_seconds = 0.5
+before_seconds = 0.5
+
+[stt]
+model_dir = 'train'
+graph_dir = 'train/graph'
+sample_rate = 16000
+sample_width = 2
+channels = 1
+
+# platform is appended automatically
+kaldi_dir = 'data/stt_fsticuffs/kaldi'
+
+[intent]
+graph = '/tmp/graph.json'
+
+[home_assistant]
+api_url = 'http://supervisor/core/api'
+api_token = ''
+
+[training]
+skip_hass = false
+data_dir = 'data'
+output_dir = '/share/rhasspy-junior/train'

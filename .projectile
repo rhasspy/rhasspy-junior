@@ -1,0 +1,3 @@
+- /.venv/
+- /.mypy_cache/
+- /rhasspy_junior/.mypy_cache/

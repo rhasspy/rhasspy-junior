@@ -1,0 +1,19 @@
+toml
+
+# Communication with Home Assistant
+requests>=2<3
+
+# Wake word detection
+numpy
+sonopy~=0.1.0
+tflite_runtime>=2.5.0,<3.0
+
+# Voice activity detection
+onnxruntime>=1.6,<2.0
+
+# Intent recognition
+lingua-franca>=0.4,<1.0
+networkx>=2.4,<3
+
+# Speech recognition
+phonetisaurus>=0.3.0,<1
