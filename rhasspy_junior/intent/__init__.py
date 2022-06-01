@@ -14,5 +14,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from .const import IntentRecognizer, IntentEntity, IntentResult, IntentRequest
+from .const import IntentEntity, IntentRecognizer, IntentRequest, IntentResult
 from .intent_fsticuffs import FsticuffsIntentRecognizer

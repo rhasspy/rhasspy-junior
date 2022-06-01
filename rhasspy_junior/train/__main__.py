@@ -17,10 +17,10 @@
 import logging
 import typing
 
-from .args import get_args
 from ..config import load_configs
 from ..train import Trainer, TrainingContext
 from ..utils import load_class
+from .args import get_args
 
 _LOGGER = logging.getLogger(__package__)
 

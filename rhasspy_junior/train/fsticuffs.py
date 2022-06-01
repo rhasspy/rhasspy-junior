@@ -15,25 +15,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import logging
 import io
 import json
-import typing
-import sqlite3
-import shutil
+import logging
 import platform
-from pathlib import Path
+import shutil
+import sqlite3
+import typing
 from collections import defaultdict
+from pathlib import Path
 
 import lingua_franca
 
-from .const import Trainer, TrainingContext
 from ..intent.intent_fsticuffs.ini_jsgf import Expression, Word, parse_ini, split_rules
 from ..intent.intent_fsticuffs.jsgf import walk_expression
 from ..intent.intent_fsticuffs.jsgf_graph import (
     graph_to_json,
-    sentences_to_graph,
     json_to_graph,
+    sentences_to_graph,
 )
 from ..intent.intent_fsticuffs.number_utils import (
     number_range_transform,
@@ -42,6 +41,7 @@ from ..intent.intent_fsticuffs.number_utils import (
 from ..intent.intent_fsticuffs.slots import add_slot_replacements
 from ..stt.stt_fsticuffs.g2p import PronunciationsType
 from ..stt.stt_fsticuffs.train import train
+from .const import Trainer, TrainingContext
 
 _LOGGER = logging.getLogger(__package__)
 

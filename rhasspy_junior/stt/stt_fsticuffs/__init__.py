@@ -19,11 +19,10 @@ import logging
 import platform
 import threading
 import typing
-from queue import Queue
 from pathlib import Path
+from queue import Queue
 
 from ..const import SpeechToText, SpeechToTextRequest, SpeechToTextResult
-
 from .transcribe import KaldiCommandLineTranscriber
 
 _LOGGER = logging.getLogger(__package__)

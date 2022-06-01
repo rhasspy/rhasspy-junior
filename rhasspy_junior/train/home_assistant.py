@@ -20,8 +20,8 @@ import argparse
 import logging
 import sys
 import typing
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 import requests
 

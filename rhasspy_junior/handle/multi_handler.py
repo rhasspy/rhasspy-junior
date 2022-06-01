@@ -15,38 +15,26 @@
 #
 
 import typing
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
-from ..intent import IntentResult
-
-
-@dataclass
-class IntentHandleRequest:
-    """Request for intent handling"""
-
-    intent_result: IntentResult
+from ..utils import load_class
+from .const import IntentHandler, IntentHandleRequest, IntentHandleResult
 
 
-@dataclass
-class IntentHandleResult:
-    """Result of intent handling"""
-
-    handled: bool
-
-
-class IntentHandler(ABC):
-    """Base class for intent handlers"""
-
+class MultiIntentHandler(IntentHandler):
     def __init__(self, config: typing.Dict[str, typing.Any]):
-        pass
+        super().__init__(config)
+        self._root_config = config
+        self.config = config["handle"]["multi"]
 
-    @abstractmethod
     def run(self, request: IntentHandleRequest) -> IntentHandleResult:
-        """Run the intent handler"""
+        """Run trainer"""
+        handler_types = self.config["types"]
+        for handler_type in handler_types:
+            handler_class = load_class(handler_type)
+            handler = typing.cast(IntentHandler, handler_class(self._root_config))
+            result = handler.run(request)
 
-    def start(self):
-        """Initialize handler"""
+            if result.handled:
+                break
 
-    def stop(self):
-        """Uninitialize handler"""
+        return result

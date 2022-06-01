@@ -20,15 +20,14 @@ import typing
 from enum import Enum, auto
 from queue import Queue
 
-
-from .const import VoiceLoop
-from ..mic import Microphone
-from ..hotword import Hotword
-from ..vad import VoiceActivityDetector
-from ..stt import SpeechToText, SpeechToTextRequest
-from ..intent import IntentRecognizer, IntentRequest
 from ..handle import IntentHandler, IntentHandleRequest
+from ..hotword import Hotword
+from ..intent import IntentRecognizer, IntentRequest
+from ..mic import Microphone
+from ..stt import SpeechToText, SpeechToTextRequest
 from ..utils import load_class
+from ..vad import VoiceActivityDetector
+from .const import VoiceLoop
 
 _LOGGER = logging.getLogger(__package__)
 

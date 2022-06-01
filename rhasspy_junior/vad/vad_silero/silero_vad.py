@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import typing
 
-import onnxruntime
 import numpy as np
+import onnxruntime
 
 
 class SileroVoiceActivityDetector:

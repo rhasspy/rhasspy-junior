@@ -7,8 +7,8 @@ import typing
 
 import requests
 
-from .const import IntentHandleRequest, IntentHandleResult, IntentHandler
 from ..intent import IntentResult
+from .const import IntentHandler, IntentHandleRequest, IntentHandleResult
 
 _LOGGER = logging.getLogger(__package__)
 
@@ -29,7 +29,10 @@ class HomeAssistantIntentHandler(IntentHandler):
         self.api_url = self.config["api_url"]
         self.api_token = self.config["api_token"]
 
-    def run(self, request: IntentHandleRequest) -> typing.Optional[IntentHandleResult]:
+        self._handled = IntentHandleResult(handled=True)
+        self._not_handled = IntentHandleResult(handled=False)
+
+    def run(self, request: IntentHandleRequest) -> IntentHandleResult:
         url = f"{self.api_url}/intent/handle"
         headers = {
             "Content-Type": "application/json",
@@ -47,14 +50,14 @@ class HomeAssistantIntentHandler(IntentHandler):
             requests.post(
                 url, headers=headers, json={"name": intent_name, "data": data}
             )
-        else:
-            self.handle_custom_intent(intent_name, data, headers)
 
-        return None
+            return self._handled
+
+        return self.handle_custom_intent(intent_name, data, headers)
 
     def handle_custom_intent(
         self, intent_name: str, data: typing.Dict[str, str], headers
-    ):
+    ) -> IntentHandleResult:
         service_name = ""
         service_data = {"entity_id": data["entity_id"]}
 
@@ -84,3 +87,7 @@ class HomeAssistantIntentHandler(IntentHandler):
                 headers=headers,
                 json=service_data,
             )
+
+            return self._handled
+
+        return self._not_handled

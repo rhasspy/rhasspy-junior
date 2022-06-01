@@ -17,8 +17,8 @@
 
 import typing
 
-from .const import Trainer, TrainingContext
 from ..utils import load_class
+from .const import Trainer, TrainingContext
 
 
 class MultiTrainer(Trainer):

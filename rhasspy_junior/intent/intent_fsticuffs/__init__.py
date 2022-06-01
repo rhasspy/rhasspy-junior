@@ -20,8 +20,7 @@ import typing
 
 import networkx as nx
 
-from ..const import IntentRecognizer, IntentEntity, IntentResult, IntentRequest
-
+from ..const import IntentEntity, IntentRecognizer, IntentRequest, IntentResult
 from .fsticuffs import recognize
 from .jsgf_graph import json_to_graph
 

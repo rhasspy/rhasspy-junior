@@ -15,6 +15,6 @@
 #
 
 from .const import Trainer, TrainingContext
-from .home_assistant import HomeAssistantTrainer
 from .fsticuffs import FsticuffsTrainer
+from .home_assistant import HomeAssistantTrainer
 from .multi_trainer import MultiTrainer
