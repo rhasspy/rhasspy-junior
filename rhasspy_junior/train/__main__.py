@@ -18,9 +18,9 @@ import logging
 import typing
 
 from .args import get_args
-from .config import load_configs
-from .loop import VoiceLoop
-from .utils import load_class
+from ..config import load_configs
+from ..train import Trainer, TrainingContext
+from ..utils import load_class
 
 _LOGGER = logging.getLogger(__package__)
 
@@ -39,21 +39,15 @@ def main():
     config = load_configs(args.config)
     _LOGGER.debug(config)
 
-    loop_config = config["loop"]
-    loop_class = load_class(loop_config["type"])
+    train_config = config["train"]
+    train_class = load_class(train_config["type"])
 
-    _LOGGER.debug("Loading voice loop (%s)", loop_class)
-    loop = typing.cast(VoiceLoop, loop_class(config))
-    _LOGGER.info("Voice loop loaded (%s)", loop_class)
+    _LOGGER.debug("Loading trainer (%s)", train_class)
+    train = typing.cast(Trainer, train_class(config))
+    _LOGGER.info("Trainer loaded (%s)", train_class)
 
-    loop.start()
-
-    try:
-        loop.run()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        loop.stop()
+    context = TrainingContext()
+    train.run(context)
 
 
 if __name__ == "__main__":

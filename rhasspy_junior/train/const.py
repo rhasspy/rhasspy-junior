@@ -1,4 +1,4 @@
-# Copyright 2022 Mycroft AI Inc.
+# Copyright 2022 Michael Hansen
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,16 +13,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#
-from .fsticuffs import recognize
-from .ini_jsgf import parse_ini
-from .jsgf import Rule, Sentence
-from .jsgf_graph import (
-    graph_to_fst,
-    graph_to_gzip_pickle,
-    graph_to_json,
-    gzip_pickle_to_graph,
-    intents_to_graph,
-    json_to_graph,
-    sentences_to_graph,
-)
+
+import typing
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+
+@dataclass
+class TrainingContext:
+    pass
+
+
+class Trainer(ABC):
+    """Base class for trainers"""
+
+    def __init__(self, config: typing.Dict[str, typing.Any]):
+        pass
+
+    @abstractmethod
+    def run(self, context: TrainingContext) -> TrainingContext:
+        """Run trainer"""

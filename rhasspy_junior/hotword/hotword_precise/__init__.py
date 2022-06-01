@@ -1,16 +1,19 @@
-# Copyright 2021 Mycroft AI Inc.
+# Copyright 2022 Michael Hansen
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import logging
 import typing
 from pathlib import Path
@@ -19,60 +22,22 @@ import numpy as np
 import tflite_runtime.interpreter as tflite
 from sonopy import mfcc_spec
 
+from ..const import Hotword, HotwordProcessResult
 from .params import ListenerParams
 from .util import buffer_to_audio
 
-try:
-    from mycroft.client.speech.hotword_factory import HotWordEngine
-    from mycroft.util.log import LOG
-except ImportError:
-
-    class BaseHotWordEngine:
-        """Minimal base class in case mycroft library is unavailable"""
-
-        def __init__(self, key_phrase="hey mycroft", config=None, lang="en-us"):
-            self.config = config or {}
-
-        def found_wake_word(self, frame_data) -> bool:
-            """frame_data is unused"""
-            return False
-
-        def update(self, chunk):
-            pass
-
-    HotWordEngine = BaseHotWordEngine
-    LOG = logging.getLogger(__name__)
-
-#  ----------------------------------------------------------------------------
-
-_DIR = Path(__file__).parent
-_DEFAULT_MODEL = _DIR / "models" / "hey_mycroft.tflite"
-
-#  ----------------------------------------------------------------------------
+_LOGGER = logging.getLogger(__package__)
 
 
-class TFLiteHotWordEngine(HotWordEngine):
-    def __init__(
-        self,
-        key_phrase="hey mycroft",
-        config=None,
-        lang="en-us",
-        local_model_file: typing.Optional[typing.Union[str, Path]] = None,
-        sensitivity: float = 0.5,
-        trigger_level: int = 3,
-        chunk_size: int = 2048,
-    ):
-        super().__init__(key_phrase, config, lang)
+class PreciseHotword(Hotword):
+    def __init__(self, config: typing.Dict[str, typing.Any]):
+        super().__init__(config)
+        self.config = config["hotword"]["precise"]
 
-        self.sensitivity = self.config.get("sensitivity", sensitivity)
-        self.trigger_level = self.config.get("trigger_level", trigger_level)
-        self.chunk_size = self.config.get("chunk_size", chunk_size)
-
-        local_model_file = (
-            self.config.get("local_model_file", local_model_file) or _DEFAULT_MODEL
-        )
-
-        self.model_path = Path(local_model_file).absolute()
+        self.model_path = Path(str(self.config["model"])).absolute()
+        self.sensitivity = float(self.config["sensitivity"])
+        self.trigger_level = int(self.config["trigger_level"])
+        self.chunk_bytes = int(self.config["chunk_bytes"])
 
         self._interpreter: typing.Optional[tflite.Interpreter] = None
         self._params: typing.Optional[ListenerParams] = None
@@ -97,15 +62,13 @@ class TFLiteHotWordEngine(HotWordEngine):
         # Activation level (> trigger_level = wake word found)
         self._activation: int = 0
 
-        # True when wake word is found during update()
-        self._is_found = False
+        self._found = HotwordProcessResult(is_detected=True)
+        self._not_found = HotwordProcessResult(is_detected=False)
 
-        # There doesn't seem to be an initialize() method for wake word plugins,
-        # so we'll load the model here.
-        self._load_model()
+    def start(self):
+        """Start detector"""
+        _LOGGER.debug("Loading model from %s", self.model_path)
 
-    def _load_model(self):
-        LOG.debug("Loading model from %s", self.model_path)
         self._interpreter = tflite.Interpreter(model_path=str(self.model_path))
         self._interpreter.allocate_tensors()
         self._input_details = self._interpreter.get_input_details()
@@ -122,13 +85,30 @@ class TFLiteHotWordEngine(HotWordEngine):
             (1, self._params.n_features, self._params.n_mfcc), dtype=np.float32
         )
 
-    def update(self, chunk):
-        self._is_found = False
+        self._chunk_buffer = bytes()
+
+    def stop(self):
+        """Stop detector"""
+        self._interpreter = None
+        self._input_details = None
+        self._output_details = None
+        self._params = None
+        self._inputs = None
+        self._chunk_buffer = bytes()
+
+    def process_chunk(self, chunk: bytes) -> HotwordProcessResult:
+        """Process chunk of raw audio data."""
+        assert self._interpreter is not None
+        assert self._params is not None
+        assert self._inputs is not None
+        assert self._input_details is not None
+        assert self._output_details is not None
+
         self._chunk_buffer += chunk
 
         if len(self._chunk_buffer) < self._window_bytes:
             # Need a full window of audio first
-            return
+            return self._not_found
 
         # Process current audio
         audio = buffer_to_audio(self._chunk_buffer)
@@ -161,7 +141,7 @@ class TFLiteHotWordEngine(HotWordEngine):
         self._inputs_idx = inputs_end_idx
 
         if self._inputs_idx < self._inputs.shape[1]:
-            return
+            return self._not_found
 
         # TODO: Add deltas
 
@@ -174,7 +154,7 @@ class TFLiteHotWordEngine(HotWordEngine):
         if (prob < 0.0) or (prob > 1.0):
             # TODO: Handle out of range.
             # Not seeing these currently, so ignoring.
-            return
+            return self._not_found
 
         # Decode
         activated = prob > 1.0 - self.sensitivity
@@ -186,18 +166,12 @@ class TFLiteHotWordEngine(HotWordEngine):
             triggered = self._activation > self.trigger_level
             if triggered or (activated and (self._activation < 0)):
                 # Push activation down far to avoid an accidental re-activation
-                self._activation = -(8 * 2048) // self.chunk_size
+                self._activation = -(8 * 2048) // self.chunk_bytes
         elif self._activation > 0:
             # Decrease activation
             self._activation -= 1
 
         if triggered:
-            self._is_found = True
-            LOG.debug("Triggered")
+            return self._found
 
-    def found_wake_word(self, frame_data) -> bool:
-        if self._is_found:
-            self._is_found = False
-            return True
-
-        return False
+        return self._not_found

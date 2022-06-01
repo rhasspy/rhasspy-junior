@@ -1,43 +1,99 @@
-[microphone]
-run = "arecord -r 16000 -c 1 -f S16_LE -t raw"
-chunk_bytes = 2048
+[mic]
+type = 'rhasspy_junior.mic.CommandMicrophone'
+max_queue_chunks = 100
+
+    [mic.command]
+    command = 'arecord -q -r 16000 -c 1 -f S16_LE -t raw'
+    chunk_bytes = 2048
+    stop_timeout_sec = 1
+
+# -----------------------------------------------------------------------------
 
 [hotword]
-model = "data/wake_precise/hey_mycroft.tflite"
-sensitivity = 0.8
-trigger_level = 4
-chunk_size = 2048
+type = 'rhasspy_junior.hotword.PreciseHotword'
+
+    [hotword.precise]
+    model = "data/wake_precise/hey_mycroft.tflite"
+    sensitivity = 0.8
+    trigger_level = 4
+    chunk_bytes = 2048
+
+# -----------------------------------------------------------------------------
 
 [vad]
-model = "data/vad_silero/silero_vad.onnx"
-threshold = 0.2
-sample_rate = 16000
-chunk_size = 960
-skip_seconds = 0
-min_seconds = 1
-max_seconds = 30
-speech_seconds = 0.3
-silence_seconds = 0.5
-before_seconds = 0.5
+type = 'rhasspy_junior.vad.SileroVoiceActivityDetector'
+
+    [vad.silero]
+    model = "data/vad_silero/silero_vad.onnx"
+    threshold = 0.2
+    sample_rate = 16000
+    chunk_size = 960
+    skip_seconds = 0
+    min_seconds = 1
+    max_seconds = 30
+    speech_seconds = 0.3
+    silence_seconds = 0.5
+    before_seconds = 0.5
+
+# -----------------------------------------------------------------------------
 
 [stt]
-model_dir = 'train'
-graph_dir = 'train/graph'
-sample_rate = 16000
-sample_width = 2
-channels = 1
+type = 'rhasspy_junior.stt.FsticuffsSpeechToText'
 
-# platform is appended automatically
-kaldi_dir = 'data/stt_fsticuffs/kaldi'
+    [stt.fsticuffs]
+    model_dir = 'train/stt_fsticuffs'
+    graph_dir = 'train/stt_fsticuffs/graph'
+    sample_rate = 16000
+    sample_width = 2
+    channels = 1
+
+    end_speech_timeout_sec = 5
+
+    # platform is appended automatically
+    kaldi_dir = 'data/stt_fsticuffs/kaldi'
+
+# -----------------------------------------------------------------------------
 
 [intent]
-graph = '/tmp/graph.json'
+type = 'rhasspy_junior.intent.FsticuffsIntentRecognizer'
 
-[home_assistant]
-api_url = 'http://supervisor/core/api'
-api_token = ''
+    [intent.fsticuffs]
+    graph = 'train/intent_fsticuffs/graph.json'
 
-[training]
-skip_hass = false
-data_dir = 'data'
-output_dir = '/share/rhasspy-junior/train'
+# -----------------------------------------------------------------------------
+
+[handle]
+type = 'rhasspy_junior.handle.HomeAssistantIntentHandler'
+
+     [handle.home_assistant]
+     api_url = 'http://supervisor/core/api'
+     api_token = ''
+
+# -----------------------------------------------------------------------------
+
+[loop]
+type = 'rhasspy_junior.loop.DefaultVoiceLoop'
+
+# -----------------------------------------------------------------------------
+
+[train]
+type = 'rhasspy_junior.train.MultiTrainer'
+
+    [train.multi]
+    types = ['rhasspy_junior.train.HomeAssistantTrainer', 'rhasspy_junior.train.FsticuffsTrainer']
+
+    [train.home_assistant]
+    api_url = 'http://supervisor/core/api'
+    api_token = ''
+    # input_template = 'data/home_assistant/sentences.ini.template'
+    output_sentences = 'train/home_assistant/sentences.ini'
+
+    [train.fsticuffs]
+    data_dir = 'data/stt_fsticuffs'
+    train_dir = 'train/stt_fsticuffs'
+    language = 'en-us'
+    input_files = ['train/home_assistant/sentences.ini']
+    output_graph = 'train/intent_fsticuffs/graph.json'
+    number_language = 'en'
+    replace_numbers = true
+    casing = 'lower'
