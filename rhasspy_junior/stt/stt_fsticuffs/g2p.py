@@ -3,8 +3,6 @@ import io
 import itertools
 import logging
 import re
-import shutil
-import tempfile
 import typing
 from collections import defaultdict
 from enum import Enum
@@ -125,6 +123,7 @@ def write_pronunciations(
         # Open missing words file
         missing_file: typing.Optional[io.TextIOWrapper] = None
         if missing_words_path:
+            # pylint: disable=consider-using-with
             missing_file = open(missing_words_path, "w", encoding="utf-8")
 
         try:

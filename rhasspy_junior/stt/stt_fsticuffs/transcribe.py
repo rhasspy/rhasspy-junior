@@ -263,6 +263,7 @@ class KaldiCommandLineTranscriber:
     def start_decode(self):
         """Starts online2-tcp-nnet3-decode-faster process."""
         if self.temp_dir is None:
+            # pylint: disable=consider-using-with
             self.temp_dir = tempfile.TemporaryDirectory()
 
         if self.chunk_fifo_path is None:
@@ -292,6 +293,7 @@ class KaldiCommandLineTranscriber:
 
         _LOGGER.debug(kaldi_cmd)
 
+        # pylint: disable=consider-using-with
         self.decode_proc = subprocess.Popen(
             kaldi_cmd,
             stdin=subprocess.PIPE,
@@ -306,6 +308,7 @@ class KaldiCommandLineTranscriber:
         #
         # We won't reach the "ready" stage if we open this earlier or later.
         if self.chunk_fifo_file is None:
+            # pylint: disable=consider-using-with
             self.chunk_fifo_file = open(self.chunk_fifo_path, mode="wb")
 
         # Read until started

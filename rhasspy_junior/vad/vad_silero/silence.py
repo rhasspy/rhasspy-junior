@@ -185,7 +185,6 @@ class SilenceDetector:
         # Voice detector
         self.vad: typing.Optional[SileroVoiceActivityDetector] = None
         if self.use_vad:
-            chunk_ms = 1000 * ((self.chunk_size / self.sample_width) / self.sample_rate)
             self.vad = SileroVoiceActivityDetector(str(self.vad_model))
 
         self.seconds_per_buffer = (

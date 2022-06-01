@@ -16,9 +16,7 @@
 #
 """Loads entities from Home Assistant API and generates intents"""
 
-import argparse
 import logging
-import sys
 import typing
 from dataclasses import dataclass
 from pathlib import Path
@@ -101,6 +99,8 @@ class HomeAssistantTrainer(Trainer):
                 )
 
                 self.write_entity(entity, output_sentences_file)
+
+        return context
 
     def write_entity(self, entity: Entity, intents_file: typing.TextIO):
         domain = entity.domain

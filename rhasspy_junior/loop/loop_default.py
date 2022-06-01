@@ -49,6 +49,7 @@ class DefaultVoiceLoop(VoiceLoop):
     """Runs a standard hotword -> stt -> intent voice loop"""
 
     def __init__(self, config: typing.Dict[str, typing.Any]):
+        super().__init__(config)
         self.config = config
 
         self.mic: typing.Optional[Microphone] = None

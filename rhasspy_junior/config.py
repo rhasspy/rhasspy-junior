@@ -30,6 +30,7 @@ def load_configs(
     config: typing.Dict[str, typing.Any] = {}
 
     for config_path in config_paths:
+        config_path = Path(config_path)
         if not config_path.is_file():
             _LOGGER.warning("Skipping missing config %s", config_path)
             continue

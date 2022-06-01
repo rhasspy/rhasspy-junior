@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-import argparse
-import json
 import logging
-import sys
 import typing
 
 import requests
 
-from ..intent import IntentResult
 from .const import IntentHandler, IntentHandleRequest, IntentHandleResult
 
 _LOGGER = logging.getLogger(__package__)
@@ -24,6 +20,7 @@ _BUILTIN_INTENTS = {
 
 class HomeAssistantIntentHandler(IntentHandler):
     def __init__(self, config: typing.Dict[str, typing.Any]):
+        super().__init__(config)
         self.config = config["handle"]["home_assistant"]
 
         self.api_url = self.config["api_url"]

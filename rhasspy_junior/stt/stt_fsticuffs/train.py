@@ -5,7 +5,6 @@ import os
 import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 import typing
 from pathlib import Path
@@ -53,12 +52,16 @@ def train(
         vocab_file = open(vocab_path, "w+", encoding="utf-8")
     else:
         vocab_file = typing.cast(
-            io.TextIOWrapper, tempfile.NamedTemporaryFile(suffix=".txt", mode="w+")
+            # pylint: disable=consider-using-with
+            io.TextIOWrapper,
+            tempfile.NamedTemporaryFile(suffix=".txt", mode="w+"),
         )
         vocab_path = vocab_file.name
 
     intent_state_path = model_dir / "intent_states.txt"
     intent_state_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # pylint: disable=consider-using-with
     intent_state_file = open(intent_state_path, "w", encoding="utf-8")
 
     # Begin training
@@ -467,6 +470,8 @@ def prune_intents(
     try:
         # Prune FST states for out of scope intents
         fstprint_cmd = ["fstprint", str(original_fst_path)]
+
+        # pylint: disable=consider-using-with
         fstprint_proc = subprocess.Popen(
             fstprint_cmd, stdout=subprocess.PIPE, universal_newlines=True
         )

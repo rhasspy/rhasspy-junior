@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import typing
-
 import numpy as np
 import onnxruntime
 
@@ -16,9 +14,6 @@ class SileroVoiceActivityDetector:
         self.session.intra_op_num_threads = 1
         self.session.inter_op_num_threads = 1
 
-        self._reset_states()
-
-    def _reset_states(self):
         self._h = np.zeros((2, 1, 64)).astype("float32")
         self._c = np.zeros((2, 1, 64)).astype("float32")
 
@@ -33,7 +28,7 @@ class SileroVoiceActivityDetector:
 
         if len(audio_array.shape) > 2:
             raise ValueError(
-                f"Too many dimensions for input audio chunk {audio_array.dim()}"
+                f"Too many dimensions for input audio chunk {audio_array.shape}"
             )
 
         if audio_array.shape[0] > 1:
