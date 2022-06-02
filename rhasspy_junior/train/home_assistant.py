@@ -38,9 +38,11 @@ class Entity:
 
 
 class HomeAssistantTrainer(Trainer):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self.config = config["train"]["home_assistant"]
+    """Pulls entities from Home Assistant and writes sentences to control them"""
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "train.home_assistant"
 
     def run(self, context: TrainingContext) -> TrainingContext:
         """Run trainer"""

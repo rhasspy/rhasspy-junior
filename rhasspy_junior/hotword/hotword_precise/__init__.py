@@ -22,7 +22,8 @@ import numpy as np
 import tflite_runtime.interpreter as tflite
 from sonopy import mfcc_spec
 
-from ..const import Hotword, HotwordProcessResult
+from rhasspy_junior.hotword.const import Hotword, HotwordProcessResult
+
 from .params import ListenerParams
 from .util import buffer_to_audio
 
@@ -30,9 +31,14 @@ _LOGGER = logging.getLogger(__package__)
 
 
 class PreciseHotword(Hotword):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self.config = config["hotword"]["precise"]
+    """Hotword detection using Mycroft Precise"""
+
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
         self.model_path = Path(str(self.config["model"])).absolute()
         self.sensitivity = float(self.config["sensitivity"])
@@ -64,6 +70,10 @@ class PreciseHotword(Hotword):
 
         self._found = HotwordProcessResult(is_detected=True)
         self._not_found = HotwordProcessResult(is_detected=False)
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "hotword.precise"
 
     def start(self):
         """Start detector"""

@@ -22,7 +22,12 @@ import typing
 from pathlib import Path
 from queue import Queue
 
-from ..const import SpeechToText, SpeechToTextRequest, SpeechToTextResult
+from rhasspy_junior.stt.const import (
+    SpeechToText,
+    SpeechToTextRequest,
+    SpeechToTextResult,
+)
+
 from .transcribe import KaldiCommandLineTranscriber
 
 _LOGGER = logging.getLogger(__package__)
@@ -31,10 +36,13 @@ _LOGGER = logging.getLogger(__package__)
 class FsticuffsSpeechToText(SpeechToText):
     """Recognize speech using fsticuffs"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
-        self.config = config["stt"]["fsticuffs"]
         self._running = True
         self._input_queue: "Queue[typing.Optional[SpeechToTextRequest]]" = Queue()
         self._result: typing.Optional[SpeechToTextResult] = None
@@ -42,6 +50,10 @@ class FsticuffsSpeechToText(SpeechToText):
 
         self._thread: typing.Optional[threading.Thread] = None
         self._result_event = threading.Event()
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "stt.fsticuffs"
 
     def begin_speech(self, request: SpeechToTextRequest):
         """Start speech to text phrase"""

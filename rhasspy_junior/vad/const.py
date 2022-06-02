@@ -15,8 +15,10 @@
 #
 
 import typing
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
+
+from rhasspy_junior.const import ConfigurableComponent
 
 
 @dataclass
@@ -25,11 +27,15 @@ class VoiceActivityResult:
     is_end_of_command: bool = False
 
 
-class VoiceActivityDetector(ABC):
+class VoiceActivityDetector(ConfigurableComponent):
     """Base class for voice activity detection (VAD)"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        pass
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
     @abstractmethod
     def begin_command(self):

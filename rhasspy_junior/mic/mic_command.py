@@ -24,15 +24,22 @@ from .const import Microphone
 class CommandMicrophone(Microphone):
     """Microphone that reads audio from a subprocess"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
-        self.config = config["mic"]["command"]
         self._proc: typing.Optional[subprocess.Popen] = None
 
         self.command = shlex.split(str(self.config["command"]))
         self.chunk_bytes = int(self.config["chunk_bytes"])
         self.stop_timeout_sec = float(self.config["stop_timeout_sec"])
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "mic.command"
 
     def start(self):
         self.stop()

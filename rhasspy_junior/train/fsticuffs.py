@@ -27,30 +27,36 @@ from pathlib import Path
 
 import lingua_franca
 
-from ..intent.intent_fsticuffs.ini_jsgf import Expression, Word, parse_ini, split_rules
-from ..intent.intent_fsticuffs.jsgf import walk_expression
-from ..intent.intent_fsticuffs.jsgf_graph import (
+from rhasspy_junior.intent.intent_fsticuffs.ini_jsgf import (
+    Expression,
+    Word,
+    parse_ini,
+    split_rules,
+)
+from rhasspy_junior.intent.intent_fsticuffs.jsgf import walk_expression
+from rhasspy_junior.intent.intent_fsticuffs.jsgf_graph import (
     graph_to_json,
     json_to_graph,
     sentences_to_graph,
 )
-from ..intent.intent_fsticuffs.number_utils import (
+from rhasspy_junior.intent.intent_fsticuffs.number_utils import (
     number_range_transform,
     number_transform,
 )
-from ..intent.intent_fsticuffs.slots import add_slot_replacements
-from ..stt.stt_fsticuffs.g2p import PronunciationsType
-from ..stt.stt_fsticuffs.train import train
-from .const import Trainer, TrainingContext
+from rhasspy_junior.intent.intent_fsticuffs.slots import add_slot_replacements
+from rhasspy_junior.stt.stt_fsticuffs.g2p import PronunciationsType
+from rhasspy_junior.stt.stt_fsticuffs.train import train
+from rhasspy_junior.train.const import Trainer, TrainingContext
 
 _LOGGER = logging.getLogger(__package__)
 
 
 class FsticuffsTrainer(Trainer):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self._root_config = config
-        self.config = config["train"]["fsticuffs"]
+    """Train speech to text and intent recognizer with fsticuffs"""
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "train.fsticuffs"
 
     def run(self, context: TrainingContext) -> TrainingContext:
         """Run trainer"""

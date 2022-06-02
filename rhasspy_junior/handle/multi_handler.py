@@ -16,22 +16,37 @@
 
 import typing
 
-from ..utils import load_class
+from rhasspy_junior.utils import load_class
+
 from .const import IntentHandler, IntentHandleRequest, IntentHandleResult
 
 
 class MultiIntentHandler(IntentHandler):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self._root_config = config
-        self.config = config["handle"]["multi"]
+    """Run multiple intent handlers in series until an intent is handled"""
+
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
     def run(self, request: IntentHandleRequest) -> IntentHandleResult:
         """Run trainer"""
         handler_types = self.config["types"]
         for handler_type in handler_types:
+
+            # Path to Python class
+            # Maybe be <type> or <type>#<path> where <path> is appended to the config path
+            config_extra_path: typing.Optional[str] = None
+            if "#" in handler_type:
+                handler_type, config_extra_path = handler_type.split("#", maxsplit=1)
+
             handler_class = load_class(handler_type)
-            handler = typing.cast(IntentHandler, handler_class(self._root_config))
+            handler = typing.cast(
+                IntentHandler,
+                handler_class(self.root_config, config_extra_path=config_extra_path),
+            )
             result = handler.run(request)
 
             if result.handled:

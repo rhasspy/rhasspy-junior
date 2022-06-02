@@ -15,14 +15,20 @@
 #
 
 import typing
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+
+from rhasspy_junior.const import ConfigurableComponent
 
 
-class VoiceLoop(ABC):
+class VoiceLoop(ConfigurableComponent):
     """Base class for voice loops"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        pass
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
     @abstractmethod
     def run(self):

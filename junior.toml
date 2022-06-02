@@ -74,6 +74,8 @@ type = 'rhasspy_junior.handle.HomeAssistantIntentHandler'
 [loop]
 type = 'rhasspy_junior.loop.DefaultVoiceLoop'
 
+    [loop.default]
+
 # -----------------------------------------------------------------------------
 
 [train]

@@ -17,23 +17,35 @@
 
 import typing
 
-from ..utils import load_class
+from rhasspy_junior.utils import load_class
+
 from .const import Trainer, TrainingContext
 
 
 class MultiTrainer(Trainer):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self._root_config = config
-        self.config = config["train"]["multi"]
+    """Run multiple trainers in series"""
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "train.multi"
 
     def run(self, context: TrainingContext) -> TrainingContext:
         """Run trainer"""
         context = TrainingContext()
         trainer_types = self.config["types"]
         for trainer_type in trainer_types:
+
+            # Path to Python class
+            # Maybe be <type> or <type>#<path> where <path> is appended to the config path
+            config_extra_path: typing.Optional[str] = None
+            if "#" in trainer_type:
+                trainer_type, config_extra_path = trainer_type.split("#", maxsplit=1)
+
             trainer_class = load_class(trainer_type)
-            trainer = typing.cast(Trainer, trainer_class(self._root_config))
+            trainer = typing.cast(
+                Trainer,
+                trainer_class(self.root_config, config_extra_path=config_extra_path),
+            )
             context = trainer.run(context)
 
         return context

@@ -16,18 +16,28 @@
 
 import typing
 
-from ..const import VoiceActivityDetector, VoiceActivityResult
+from rhasspy_junior.vad.const import VoiceActivityDetector, VoiceActivityResult
+
 from .silence import SilenceDetector, SilenceResultType
 
 
 class SileroVoiceActivityDetector(VoiceActivityDetector):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self.config = config["vad"]["silero"]
+    """Voice activity detection using Silero VAD"""
+
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
         self.detector: typing.Optional[SilenceDetector] = None
 
         self._speech = VoiceActivityResult(is_speech=True)
         self._silence = VoiceActivityResult(is_speech=False)
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "vad.silero"
 
     def begin_command(self):
         assert self.detector is not None

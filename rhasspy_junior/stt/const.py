@@ -15,8 +15,10 @@
 #
 
 import typing
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
+
+from rhasspy_junior.const import ConfigurableComponent
 
 
 @dataclass
@@ -32,11 +34,15 @@ class SpeechToTextResult:
     """Best transcript of speech"""
 
 
-class SpeechToText(ABC):
+class SpeechToText(ConfigurableComponent):
     """Base class for speech to text engines"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        pass
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
     @abstractmethod
     def begin_speech(self, request: SpeechToTextRequest):

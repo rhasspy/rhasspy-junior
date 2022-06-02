@@ -20,14 +20,14 @@ import typing
 from enum import Enum, auto
 from queue import Queue
 
-from ..handle import IntentHandler, IntentHandleRequest
-from ..hotword import Hotword
-from ..intent import IntentRecognizer, IntentRequest
-from ..mic import Microphone
-from ..stt import SpeechToText, SpeechToTextRequest
-from ..utils import load_class
-from ..vad import VoiceActivityDetector
-from .const import VoiceLoop
+from rhasspy_junior.handle.const import IntentHandler, IntentHandleRequest
+from rhasspy_junior.hotword.const import Hotword
+from rhasspy_junior.intent.const import IntentRecognizer, IntentRequest
+from rhasspy_junior.loop.const import VoiceLoop
+from rhasspy_junior.mic.const import Microphone
+from rhasspy_junior.stt.const import SpeechToText, SpeechToTextRequest
+from rhasspy_junior.utils import load_class
+from rhasspy_junior.vad.const import VoiceActivityDetector
 
 _LOGGER = logging.getLogger(__package__)
 
@@ -48,9 +48,12 @@ class State(str, Enum):
 class DefaultVoiceLoop(VoiceLoop):
     """Runs a standard hotword -> stt -> intent voice loop"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self.config = config
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
         self.mic: typing.Optional[Microphone] = None
         self._mic_thread: typing.Optional[threading.Thread] = None
@@ -63,6 +66,10 @@ class DefaultVoiceLoop(VoiceLoop):
         self.handle: typing.Optional[IntentHandler] = None
 
         self._state = State.DETECTING_HOTWORD
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "loop.default"
 
     def start(self):
         """Initialize voice loop"""
@@ -164,61 +171,61 @@ class DefaultVoiceLoop(VoiceLoop):
                 state = State.DETECTING_HOTWORD
 
     def load_microphone(self) -> Microphone:
-        mic_config = self.config["mic"]
+        mic_config = self.root_config["mic"]
         mic_class = load_class(mic_config["type"])
 
         _LOGGER.debug("Loading microphone (%s)", mic_class)
-        mic = typing.cast(Microphone, mic_class(self.config))
+        mic = typing.cast(Microphone, mic_class(self.root_config))
         _LOGGER.info("Microphone loaded (%s)", mic_class)
 
         return mic
 
     def load_hotword(self) -> Hotword:
-        hotword_config = self.config["hotword"]
+        hotword_config = self.root_config["hotword"]
         hotword_class = load_class(hotword_config["type"])
 
         _LOGGER.debug("Loading hotword (%s)", hotword_class)
-        hotword = typing.cast(Hotword, hotword_class(self.config))
+        hotword = typing.cast(Hotword, hotword_class(self.root_config))
         _LOGGER.info("Hotword loaded (%s)", hotword_class)
 
         return hotword
 
     def load_vad(self) -> VoiceActivityDetector:
-        vad_config = self.config["vad"]
+        vad_config = self.root_config["vad"]
         vad_class = load_class(vad_config["type"])
 
         _LOGGER.debug("Loading voice activity detector (%s)", vad_class)
-        vad = typing.cast(VoiceActivityDetector, vad_class(self.config))
+        vad = typing.cast(VoiceActivityDetector, vad_class(self.root_config))
         _LOGGER.info("Voice activity detector loaded (%s)", vad_class)
 
         return vad
 
     def load_stt(self) -> SpeechToText:
-        stt_config = self.config["stt"]
+        stt_config = self.root_config["stt"]
         stt_class = load_class(stt_config["type"])
 
         _LOGGER.debug("Loading speech to text (%s)", stt_class)
-        stt = typing.cast(SpeechToText, stt_class(self.config))
+        stt = typing.cast(SpeechToText, stt_class(self.root_config))
         _LOGGER.info("Speech to text loaded (%s)", stt_class)
 
         return stt
 
     def load_intent(self) -> IntentRecognizer:
-        intent_config = self.config["intent"]
+        intent_config = self.root_config["intent"]
         intent_class = load_class(intent_config["type"])
 
         _LOGGER.debug("Loading intent recognizer (%s)", intent_class)
-        intent = typing.cast(IntentRecognizer, intent_class(self.config))
+        intent = typing.cast(IntentRecognizer, intent_class(self.root_config))
         _LOGGER.info("Intent recognizer loaded (%s)", intent_class)
 
         return intent
 
     def load_handle(self) -> IntentHandler:
-        handle_config = self.config["handle"]
+        handle_config = self.root_config["handle"]
         handle_class = load_class(handle_config["type"])
 
         _LOGGER.debug("Loading intent handler (%s)", handle_class)
-        handle = typing.cast(IntentHandler, handle_class(self.config))
+        handle = typing.cast(IntentHandler, handle_class(self.root_config))
         _LOGGER.info("Intent handler loaded (%s)", handle_class)
 
         return handle
@@ -227,7 +234,7 @@ class DefaultVoiceLoop(VoiceLoop):
 
     def _mic_proc(self, mic: Microphone, mic_queue: "Queue[typing.Optional[bytes]]"):
         try:
-            max_mic_queue_chunks = self.config["mic"]["max_queue_chunks"]
+            max_mic_queue_chunks = self.root_config["mic"]["max_queue_chunks"]
             mic.start()
 
             while True:

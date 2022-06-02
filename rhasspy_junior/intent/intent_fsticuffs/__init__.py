@@ -20,7 +20,13 @@ import typing
 
 import networkx as nx
 
-from ..const import IntentEntity, IntentRecognizer, IntentRequest, IntentResult
+from rhasspy_junior.intent.const import (
+    IntentEntity,
+    IntentRecognizer,
+    IntentRequest,
+    IntentResult,
+)
+
 from .fsticuffs import recognize
 from .jsgf_graph import json_to_graph
 
@@ -28,11 +34,18 @@ from .jsgf_graph import json_to_graph
 class FsticuffsIntentRecognizer(IntentRecognizer):
     """Recognize intents using fsticuffs"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
-        self.config = config["intent"]["fsticuffs"]
         self.graph: typing.Optional[nx.DiGraph] = None
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "intent.fsticuffs"
 
     def recognize(self, request: IntentRequest) -> typing.Optional[IntentResult]:
         """Recognize an intent"""

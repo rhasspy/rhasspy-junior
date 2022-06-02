@@ -15,8 +15,10 @@
 #
 
 import typing
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass, field
+
+from rhasspy_junior.const import ConfigurableComponent
 
 
 @dataclass
@@ -49,11 +51,15 @@ class IntentResult:
     """Recognized named entities"""
 
 
-class IntentRecognizer(ABC):
+class IntentRecognizer(ConfigurableComponent):
     """Base class for intent recognizers"""
 
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        pass
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
     @abstractmethod
     def recognize(self, request: IntentRequest) -> typing.Optional[IntentResult]:

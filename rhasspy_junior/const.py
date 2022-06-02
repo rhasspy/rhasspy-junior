@@ -15,36 +15,30 @@
 #
 
 import typing
-from abc import abstractmethod
-from dataclasses import dataclass
-
-from rhasspy_junior.const import ConfigurableComponent
+from abc import ABC, abstractmethod
 
 
-@dataclass
-class HotwordProcessResult:
-    """Result from process_chunk"""
-
-    is_detected: bool
-    """True if hotword was detected"""
-
-
-class Hotword(ConfigurableComponent):
-    """Base class for hotword detector"""
+class ConfigurableComponent(ABC):
+    """Base class for all voice loop components"""
 
     def __init__(
         self,
         root_config: typing.Dict[str, typing.Any],
         config_extra_path: typing.Optional[str] = None,
     ):
-        super().__init__(root_config, config_extra_path=config_extra_path)
+        self.root_config = root_config
 
+        # "x.y.z" -> ["x", "y", "z"]
+        config_path_parts = self.config_path().split(".")
+        if config_extra_path:
+            config_path_parts.extend(config_extra_path.split("."))
+
+        # Locate config section from root
+        self.config = self.root_config
+        for path_part in config_path_parts:
+            self.config = self.config[path_part]
+
+    @classmethod
     @abstractmethod
-    def process_chunk(self, chunk: bytes) -> HotwordProcessResult:
-        """Process chunk of raw audio data."""
-
-    def start(self):
-        """Start detector"""
-
-    def stop(self):
-        """Stop detector"""
+    def config_path(cls) -> str:
+        """Dotted path in config object where "x.y" means config["x"]["y"]"""

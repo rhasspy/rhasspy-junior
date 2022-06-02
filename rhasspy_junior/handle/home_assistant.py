@@ -19,15 +19,24 @@ _BUILTIN_INTENTS = {
 
 
 class HomeAssistantIntentHandler(IntentHandler):
-    def __init__(self, config: typing.Dict[str, typing.Any]):
-        super().__init__(config)
-        self.config = config["handle"]["home_assistant"]
+    """Handle intents using Home Assistant"""
+
+    def __init__(
+        self,
+        root_config: typing.Dict[str, typing.Any],
+        config_extra_path: typing.Optional[str] = None,
+    ):
+        super().__init__(root_config, config_extra_path=config_extra_path)
 
         self.api_url = self.config["api_url"]
         self.api_token = self.config["api_token"]
 
         self._handled = IntentHandleResult(handled=True)
         self._not_handled = IntentHandleResult(handled=False)
+
+    @classmethod
+    def config_path(cls) -> str:
+        return "handle.home_assistant"
 
     def run(self, request: IntentHandleRequest) -> IntentHandleResult:
         url = f"{self.api_url}/intent/handle"
