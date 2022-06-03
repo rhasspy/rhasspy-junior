@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import configparser
+import hashlib
 import io
 import json
 import logging
@@ -60,17 +62,39 @@ class FsticuffsTrainer(Trainer):
 
     def run(self, context: TrainingContext) -> TrainingContext:
         """Run trainer"""
-        self.train_intent()
-        self.train_stt()
+        if self.train_intent():
+            self.train_stt()
 
         return context
 
-    def train_intent(self):
+    def train_intent(self) -> bool:
         casing = str(self.config["casing"])
         number_language = str(self.config["number_language"])
         replace_numbers = bool(self.config["replace_numbers"])
 
         input_files = [Path(v) for v in self.config["input_files"]]
+
+        output_skip_hash_path = Path(str(self.config["output_skip_hash"]))
+        actual_hash = self.compute_ini_hash(input_files)
+
+        if output_skip_hash_path.is_file():
+            # Check if training can be skipped
+            expected_hash = output_skip_hash_path.read_text(encoding="utf-8").strip()
+
+            if expected_hash == actual_hash:
+                _LOGGER.info(
+                    "Training can be skipped due to matching hash in %s",
+                    output_skip_hash_path,
+                )
+                return False
+            else:
+                _LOGGER.debug(
+                    "Training hashes do not match. Got '%s', expected '%s'",
+                    actual_hash,
+                    expected_hash,
+                )
+
+        output_skip_hash_path.parent.mkdir(parents=True, exist_ok=True)
 
         output_graph_path = Path(str(self.config["output_graph"]))
         output_graph_path.parent.mkdir(parents=True, exist_ok=True)
@@ -183,7 +207,12 @@ class FsticuffsTrainer(Trainer):
         with open(output_graph_path, "w", encoding="utf-8") as graph_file:
             json.dump(graph_to_json(graph), graph_file)
 
-    def train_stt(self):
+        # Write hash so training can be skipped next time if there are no changes
+        output_skip_hash_path.write_text(actual_hash, encoding="utf-8")
+
+        return True
+
+    def train_stt(self) -> bool:
         language = str(self.config["language"])
         data_dir = Path(str(self.config["data_dir"]))
         train_dir = Path(str(self.config["train_dir"]))
@@ -239,3 +268,36 @@ class FsticuffsTrainer(Trainer):
             g2p_model=g2p_path,
             g2p_word_transform=str.lower,
         )
+
+        return True
+
+    def compute_ini_hash(self, input_files: typing.Iterable[Path]) -> str:
+
+        # Write combined ini file
+        with io.StringIO() as ini_file:
+            for input_path in input_files:
+                with open(input_path, "r", encoding="utf-8") as input_file:
+                    for line in input_file:
+                        line = line.strip()
+                        print(line, file=ini_file)
+
+            # Load ini file
+            config = configparser.ConfigParser(
+                allow_no_value=True, strict=False, delimiters=["="]
+            )
+
+            # case sensitive
+            config.optionxform = str  # type: ignore
+            config.read_string(ini_file.getvalue())
+
+            # Compute hash
+            ini_hash = hashlib.sha256()
+            for sorted_section in sorted(config.sections()):
+                for sorted_key, sorted_value in sorted(config[sorted_section].items()):
+                    sorted_value = sorted_value or ""
+                    sorted_line = f"{sorted_key} = ${sorted_value}"
+                    ini_hash.update(sorted_line.encode())
+
+            actual_hash = ini_hash.hexdigest()
+
+        return actual_hash

@@ -95,6 +95,7 @@ type = 'rhasspy_junior.train.MultiTrainer'
     train_dir = 'train/stt_fsticuffs'
     language = 'en-us'
     input_files = ['train/home_assistant/sentences.ini']
+    output_skip_hash = 'train/intent_fsticuffs/skip_hash.txt'
     output_graph = 'train/intent_fsticuffs/graph.json'
     number_language = 'en'
     replace_numbers = true
