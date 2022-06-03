@@ -17,5 +17,6 @@ flycheck_*.py
 
 /data/
 /train/
+/wheels/
 
 junior.local.toml

@@ -16,6 +16,8 @@ RUN --mount=type=cache,id=apt-build,target=/var/cache/apt \
 
 WORKDIR /app
 
+COPY wheels/ /wheels/
+
 # Install into virtual environment
 COPY requirements.txt ./
 
@@ -24,10 +26,7 @@ RUN --mount=type=cache,id=pip-build,target=/root/.cache/pip \
     .venv/bin/pip3 install --upgrade pip && \
     find . -name 'requirements.txt' -type f | \
     xargs printf '-r %s\n' | \
-    xargs .venv/bin/pip3 install --no-cache-dir -f 'https://synesthesiam.github.io/prebuilt-apps'
-
-# Copy code
-COPY LICENSE ./
+    xargs .venv/bin/pip3 install --no-cache-dir -f /wheels -f 'https://synesthesiam.github.io/prebuilt-apps'
 
 # -----------------------------------------------------------------------------
 
@@ -48,10 +47,30 @@ RUN --mount=type=cache,id=apt-run,target=/var/cache/apt \
 
 WORKDIR /app
 
+# Copy virtual environment
 COPY --from=build /app/ ./
-COPY scripts/run.sh ./scripts/
+
+COPY LICENSE README.md ./
+
+COPY data/vad_silero/ ./data/vad_silero/
+COPY data/wake_precise/ ./data/wake_precise/
+
+COPY data/stt_fsticuffs/en-us/ ./data/stt_fsticuffs/en-us/
+COPY data/stt_fsticuffs/kaldi/steps/ ./data/stt_fsticuffs/kaldi/steps/
+COPY data/stt_fsticuffs/kaldi/utils/ ./data/stt_fsticuffs/kaldi/utils/
+COPY data/stt_fsticuffs/kaldi/${TARGETARCH}${TARGETVARIANT}/ ./data/stt_fsticuffs/kaldi/${TARGETARCH}${TARGETVARIANT}/
+RUN cd data/stt_fsticuffs/kaldi/ && \
+    if [ -d 'amd64' ]; then ln -s 'amd64' 'x86_64'; fi && \
+    if [ -d 'arm64' ]; then ln -s 'arm64' 'aarch64'; fi
+
+# Copy code
+COPY rhasspy_junior/ ./rhasspy_junior/
+COPY junior.toml ./
+
+COPY scripts/ ./scripts/
+COPY docker/run.sh ./
 
 # Clean up
 RUN rm -f /etc/apt/apt.conf.d/01cache
 
-ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["/app/run.sh"]

@@ -6,7 +6,7 @@ requests>=2<3
 # Wake word detection
 numpy
 sonopy~=0.1.0
-tflite_runtime>=2.5.0,<3.0
+tflite_runtime>=2.5.0,<2.8
 
 # Voice activity detection
 onnxruntime>=1.6,<2.0

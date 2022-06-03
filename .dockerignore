@@ -1,5 +1,14 @@
 *
 !requirements.txt
 !LICENSE
-!scripts/install.sh
+!README.md
+!rhasspy_junior/**/*.py
+!junior.toml
+!scripts/train.sh
 !scripts/run.sh
+!docker/run.sh
+
+!wheels/
+!data/vad_silero/
+!data/wake_precise/
+!data/stt_fsticuffs/
