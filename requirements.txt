@@ -17,3 +17,6 @@ networkx>=2.4,<3
 
 # Speech recognition
 phonetisaurus>=0.3.0,<1
+
+# Home Assistant train
+jinja2>=3.1,<4

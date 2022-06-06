@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import collections.abc
 import logging
 import typing
 
 import requests
+import toml
 
 from .const import IntentHandler, IntentHandleRequest, IntentHandleResult
 
@@ -31,6 +33,13 @@ class HomeAssistantIntentHandler(IntentHandler):
         self.api_url = self.config["api_url"]
         self.api_token = self.config["api_token"]
 
+        # Load mapping from intents to Home Assistant services
+        intent_service_map_path = str(self.config["intent_service_map"])
+        with open(
+            intent_service_map_path, "r", encoding="utf-8"
+        ) as intent_service_map_file:
+            self.intent_service_map = toml.load(intent_service_map_file)
+
         self._handled = IntentHandleResult(handled=True)
         self._not_handled = IntentHandleResult(handled=False)
 
@@ -39,61 +48,41 @@ class HomeAssistantIntentHandler(IntentHandler):
         return "handle.home_assistant"
 
     def run(self, request: IntentHandleRequest) -> IntentHandleResult:
-        url = f"{self.api_url}/intent/handle"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_token}",
         }
 
-        data: typing.Dict[str, str] = {}
-
         intent_name = request.intent_result.intent_name
+        service_info = self.intent_service_map.get(intent_name)
+        if service_info is None:
+            _LOGGER.debug(
+                "Cannot handle intent with Home Assistant: %s", request.intent_result
+            )
+            return self._not_handled
 
+        service_name = service_info["service"]
+        url = f"{self.api_url}/services/{service_name}"
+
+        entity_map = {"entity_id": "entity_id"}
+        service_entities = service_info.get("entities", {})
+        if not isinstance(service_entities, collections.abc.Mapping):
+            service_entities = {e: e for e in service_entities}
+
+        entity_map.update(service_entities)
+
+        service_data: typing.Dict[str, str] = {}
         for entity in request.intent_result.entities:
-            data[entity.name] = entity.value
+            mapped_name = entity_map.get(entity.name)
+            if mapped_name is not None:
+                service_data[mapped_name] = entity.value
 
-        if intent_name in _BUILTIN_INTENTS:
-            requests.post(
-                url, headers=headers, json={"name": intent_name, "data": data}
-            )
+        _LOGGER.debug("Posting data to %s: %s", url, service_data)
 
-            return self._handled
+        requests.post(
+            url,
+            headers=headers,
+            json=service_data,
+        )
 
-        return self.handle_custom_intent(intent_name, data, headers)
-
-    def handle_custom_intent(
-        self, intent_name: str, data: typing.Dict[str, str], headers
-    ) -> IntentHandleResult:
-        service_name = ""
-        service_data = {"entity_id": data["entity_id"]}
-
-        if intent_name == "HassLock":
-            service_name = "lock/lock"
-        elif intent_name == "HassUnlock":
-            service_name = "lock/unlock"
-        elif intent_name == "HassClimateTemperature":
-            service_name = "climate/set_temperature"
-            service_data["temperature"] = data["temperature"]
-        # elif intent_name == "HassClimateHvacMode":
-        #     service_name = "climate/set_temperature"
-        #     service_data["hvac_mode"] = data["mode"]
-        elif intent_name == "HassClimatePresetMode":
-            service_name = "climate/set_preset_mode"
-            service_data["preset_mode"] = data["mode"]
-        elif intent_name == "HassFanSpeed":
-            service_name = "fan/set_percentage"
-            service_data["percentage"] = data["percentage"]
-        elif intent_name == "HassHumidifierMode":
-            service_name = "humidifier/set_mode"
-            service_data["mode"] = data["mode"]
-
-        if service_name:
-            requests.post(
-                f"{self.api_url}/services/{service_name}",
-                headers=headers,
-                json=service_data,
-            )
-
-            return self._handled
-
-        return self._not_handled
+        return self._handled

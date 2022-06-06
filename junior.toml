@@ -68,6 +68,7 @@ type = 'rhasspy_junior.handle.HomeAssistantIntentHandler'
      [handle.home_assistant]
      api_url = 'http://supervisor/core/api'
      api_token = ''
+     intent_service_map = 'data/home_assistant/intent_service_map.toml'
 
 # -----------------------------------------------------------------------------
 
@@ -87,7 +88,7 @@ type = 'rhasspy_junior.train.MultiTrainer'
     [train.home_assistant]
     api_url = 'http://supervisor/core/api'
     api_token = ''
-    # input_template = 'data/home_assistant/sentences.ini.template'
+    input_template = 'data/home_assistant/sentences.template.ini'
     output_sentences = 'train/home_assistant/sentences.ini'
 
     [train.fsticuffs]
