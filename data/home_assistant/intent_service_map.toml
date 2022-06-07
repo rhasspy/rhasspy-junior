@@ -1,0 +1,88 @@
+[HassOpenCover]
+service = 'cover/open_cover'
+
+[HassCloseCover]
+service = 'cover/close_cover'
+
+# -----------------------------------------------------------------------------
+
+[HassTurnOnSwitch]
+service = 'switch/turn_on'
+
+[HassTurnOffSwitch]
+service = 'switch/turn_off'
+
+[HassToggleSwitch]
+service = 'switch/toggle'
+
+# -----------------------------------------------------------------------------
+
+[HassTurnOnLight]
+service = 'light/turn_on'
+
+[HassTurnOffLight]
+service = 'light/turn_off'
+
+# -----------------------------------------------------------------------------
+
+[HassLightSetColor]
+service = 'light/turn_on'
+entities = ['color_name']
+
+[HassLightSetBrightness]
+service = 'light/turn_on'
+entities = ['brightness_pct']
+
+# -----------------------------------------------------------------------------
+
+[HassLock]
+service = 'lock/lock'
+
+[HassUnlock]
+service = 'lock/unlock'
+
+# -----------------------------------------------------------------------------
+
+[HassTurnOnCamera]
+service = 'camera/turn_on'
+
+[HassTurnOffCamera]
+service = 'camera/turn_off'
+
+# -----------------------------------------------------------------------------
+
+[HassTurnOnFan]
+service = 'fan/turn_on'
+
+[HassTurnOffFan]
+service = 'fan/turn_off'
+
+[HassFanSetSpeed]
+service = 'fan/set_percentage'
+entities = ['percentage']
+
+# -----------------------------------------------------------------------------
+
+[HassClimateTemperature]
+service = 'climate/set_temperature'
+entities = ['temperature']
+
+[HassClimateSetPresetMode]
+service = 'climate/set_preset_mode'
+entities = ['preset_mode']
+
+# -----------------------------------------------------------------------------
+
+[HassTurnOnHumidifier]
+service = 'humidifier/turn_on'
+
+[HassTurnOffHumidifier]
+service = 'humidifier/turn_off'
+
+[HassHumidifierSetMode]
+service = 'humidifier/set_mode'
+entities = ['mode']
+
+[HassHumidifierSetHumidity]
+service = 'humidifier/set_humidity'
+entities = ['humidity']
