@@ -15,7 +15,7 @@ __pycache__/
 
 flycheck_*.py
 
-/data/
+/data/stt_fsticuffs/
 /train/
 /wheels/
 

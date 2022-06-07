@@ -87,12 +87,12 @@ class FsticuffsTrainer(Trainer):
                     output_skip_hash_path,
                 )
                 return False
-            else:
-                _LOGGER.debug(
-                    "Training hashes do not match. Got '%s', expected '%s'",
-                    actual_hash,
-                    expected_hash,
-                )
+
+            _LOGGER.debug(
+                "Training hashes do not match. Got '%s', expected '%s'",
+                actual_hash,
+                expected_hash,
+            )
 
         output_skip_hash_path.parent.mkdir(parents=True, exist_ok=True)
 

@@ -1,7 +1,7 @@
 # Rhasspy Junior
 
 
-## Support Home Assistant Domains
+## Supported Home Assistant Domains
 
 ### cover
 
@@ -20,7 +20,6 @@ toggle AC
 
 turn on the kitchen lights
 turn off kitchen lights
-toggle kitchen lights
 set the kitchen lights brightness to 50
 set the kitchen lights color to red
 
@@ -39,10 +38,10 @@ turn off front door camera
 
 ### climate
 
-turn on the hvac
-turn off hvac
-set hvac preset to eco
-set hvac temperature to 30
+turn on the ecobee
+turn off ecobee
+set ecobee preset to eco
+set ecobee temperature to 30
 
 
 ### fan
@@ -57,3 +56,4 @@ set ceiling fan speed to 50
 turn on the humidifier
 turn off humidifier
 set humidifier mode to eco
+set humidifier humidity to 50
