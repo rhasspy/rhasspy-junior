@@ -151,28 +151,26 @@ class DefaultVoiceLoop(VoiceLoop):
                         _LOGGER.debug("Recording ended")
                         stt_result = self.stt.end_speech()
 
-                        if vad_result.command_state == VoiceCommandState.ENDED:
-                            # Successful recording
-                            if stt_result is not None:
-                                intent_result = self.intent.recognize(
-                                    IntentRequest(text=stt_result.text)
-                                )
-                                if intent_result is not None:
-                                    # handle
-                                    state = State.HANDLING_INTENT
-                                    _LOGGER.debug(intent_result)
-
-                                    handle_result = self.handle.run(
-                                        IntentHandleRequest(intent_result=intent_result)
-                                    )
-                                    _LOGGER.debug(handle_result)
-                                else:
-                                    _LOGGER.warning("No intent recognized")
-                            else:
-                                _LOGGER.warning("No speech transcribed")
-                        else:
-                            # Timeout
+                        if vad_result.command_state == VoiceCommandState.TIMEOUT:
                             _LOGGER.warning("Recording timeout")
+
+                        if stt_result is not None:
+                            intent_result = self.intent.recognize(
+                                IntentRequest(text=stt_result.text)
+                            )
+                            if intent_result is not None:
+                                # handle
+                                state = State.HANDLING_INTENT
+                                _LOGGER.debug(intent_result)
+
+                                handle_result = self.handle.run(
+                                    IntentHandleRequest(intent_result=intent_result)
+                                )
+                                _LOGGER.debug(handle_result)
+                            else:
+                                _LOGGER.warning("No intent recognized")
+                        else:
+                            _LOGGER.warning("No speech transcribed")
 
                         # Reset
                         self._drain_mic_queue()
