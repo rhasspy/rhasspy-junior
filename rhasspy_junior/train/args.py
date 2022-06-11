@@ -17,24 +17,15 @@
 import argparse
 from pathlib import Path
 
+from rhasspy_junior.args import add_shared_args
+
 _DIR = Path(__file__).parent
 
 
 def get_args() -> argparse.Namespace:
     """Get command-line arguments"""
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--config",
-        required=True,
-        action="append",
-        help="Path to TOML configuration file",
-    )
-
-    parser.add_argument(
-        "--debug", action="store_true", help="Print DEBUG messages to the console"
-    )
-
+    add_shared_args(parser)
     args = parser.parse_args()
 
     # Convert to paths

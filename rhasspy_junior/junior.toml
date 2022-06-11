@@ -1,108 +1,277 @@
+# Rhasspy Junior configuration file
+# https://github.com/rhasspy/rhasspy-junior
+
+# This file is pre-processed with jinja2 (https://pypi.org/project/Jinja2/) with
+# the following variables available:
+#
+# * {{ system_data_dir }} - directory to read system data
+# * {{ user_data_dir }} - directory to read user data
+# * {{ user_train_dir }} - directory to write training data
+# * {{ platform_machine }} - result of platform.machine()
+
+# -----------------------------------------------------------------------------
+
+# Microphone input
+# Reads audio chunks from a microphone.
+#
+# Defaults to using arecord (apt-get install alsa-utils)
 [mic]
+# Class to load for microphone input.
+# Must implement rhasspy_junior.mic.Microphone
 type = 'rhasspy_junior.mic.CommandMicrophone'
+
+# Maximum number of audio chunks to keep in memory.
 max_queue_chunks = 100
 
     [mic.command]
+    # Runs a program to record chunks of raw audio.
+    # Audio must be 16-bit 16Khz mono.
+
+    # Command to run with arguments.
+    # Split internally with shlex.split().
     command = 'arecord -q -r 16000 -c 1 -f S16_LE -t raw'
+
+    # Number of bytes to read/process at a time.
     chunk_bytes = 2048
+
+    # Seconds to wait before killing process when stopping.
     stop_timeout_sec = 1
 
 # -----------------------------------------------------------------------------
 
+# Hotword detection
+# Listens for a special word/phrase in recorded audio.
+#
+# Defaults to using Mycroft Precise:
+# https://github.com/mycroftAI/mycroft-precise
 [hotword]
+# Class to load for hotword detection.
+# Must implement rhasspy_junior.hotword.Hotword
 type = 'rhasspy_junior.hotword.PreciseHotword'
 
     [hotword.precise]
-    model = "data/wake_precise/hey_mycroft.tflite"
+    # Runs a Mycroft Precise model with Tensorflow Lite.
+    # Must accept 16-bit 16khz mono audio chunks.
+
+    # Path to Tensorflow Lite model
+    model = "{{ system_data_dir }}/wake_precise/hey_mycroft.tflite"
+
+    # Value between 0-1, 1 being the most sensitive
     sensitivity = 0.8
+
+    # Number of times in a row model must be triggered to signal a detection
     trigger_level = 4
+
+    # Number of bytes of audio to process at a time.
+    # Should probably match mic configuration.
     chunk_bytes = 2048
 
 # -----------------------------------------------------------------------------
 
+# Voice activity detection
+# Detects speech/silence in recorded audio.
+#
+# Defaults to Silero VAD:
+# https://github.com/snakers4/silero-vad
 [vad]
+# Class to load for voice activity detection.
+# Must implement rhasspy_junior.vad.VoiceActivityDetector
 type = 'rhasspy_junior.vad.SileroVoiceActivityDetector'
 
     [vad.silero]
-    model = "data/vad_silero/silero_vad.onnx"
+    # Detects speech/silence with Silero VAD.
+    # Requires onnxruntime package: https://pypi.org/project/onnxruntime/
+
+    # Path to VAD onnx model
+    model = "{{ system_data_dir }}/vad_silero/silero_vad.onnx"
+
+    # Value between 0-1, 0 = silence, 1 = speech
     threshold = 0.2
+
+    # Sample rate of input audio
+    # Must be 16Khz
     sample_rate = 16000
+
+    # Number of bytes of audio to process at a time.
+    # Depends on onnx model.
     chunk_size = 960
+
+    # Seconds of audio to drop before detecting a voice command
     skip_seconds = 0
+
+    # Minimum number of seconds required for a voice command
     min_seconds = 1
+
+    # Maximum number of seconds before voice command timeout
     max_seconds = 10
+
+    # Consecutive seconds of speech required to start a voice command
     speech_seconds = 0.3
+
+    # Consecutive seconds of silence required to end a voice command
     silence_seconds = 0.5
-    before_seconds = 0.5
 
 # -----------------------------------------------------------------------------
 
+# Speech to text
+# Transcribes text from recorded audio.
+#
+# Defaults to using fsticuffs (based on Kaldi)
+# https://github.com/rhasspy/rhasspy-asr-kaldi
 [stt]
+# Class to load for speech to text transcription.
+# Must implement rhasspy_junior.stt.SpeechtoText
 type = 'rhasspy_junior.stt.FsticuffsSpeechToText'
 
     [stt.fsticuffs]
-    model_dir = 'train/stt_fsticuffs'
-    graph_dir = 'train/stt_fsticuffs/graph'
+    # Uses a custom fsticuffs speech to text model.
+    # Trained with rhasspy_junior.train.FsticuffsTrainer
+
+    # Root directory of pre-trained Kaldi model
+    model_dir = '{{ user_train_dir }}/stt_fsticuffs'
+
+    # Directory with HCLG.fst from pre-trained Kaldi model
+    graph_dir = '{{ user_train_dir }}/stt_fsticuffs/graph'
+
+    # Audio input format.
+    # Must be 16-bit 16Khz mono.
     sample_rate = 16000
     sample_width = 2
     channels = 1
 
+    # Seconds to wait before killing process when stopping
     end_speech_timeout_sec = 5
 
-    # platform is appended automatically
-    kaldi_dir = 'data/stt_fsticuffs/kaldi'
+    # Directory with pre-compiled Kaldi binaries
+    # platform.machine() is appended automatically.
+    kaldi_dir = '{{ system_data_dir }}/stt_fsticuffs/kaldi'
 
 # -----------------------------------------------------------------------------
 
+# Intent recognition
+# Matches text with an intent and named entities.
+#
+# Defaults to using fsticuffs:
+# https://github.com/rhasspy/rhasspy-nlu/
 [intent]
+# Class to load for intent recognition.
+# Must implement rhasspy_junior.intent.Recognizer
 type = 'rhasspy_junior.intent.FsticuffsIntentRecognizer'
 
     [intent.fsticuffs]
-    graph = 'train/intent_fsticuffs/graph.json'
+    # Uses a custom fsticuffs intent recognition model.
+    # Trained with rhasspy_junior.train.FsticuffsTrainer
+
+    # Path to pre-trained JSON graph file
+    # (formatted for networkx: https://networkx.org/)
+    graph = '{{ user_train_dir }}/intent_fsticuffs/graph.json'
 
 # -----------------------------------------------------------------------------
 
+# Intent handling
+# Does something with recognized intents.
+#
+# Defaults to use Home Assistant:
+# https://www.home-assistant.io/
 [handle]
 type = 'rhasspy_junior.handle.HomeAssistantIntentHandler'
 
-     [handle.home_assistant]
-     api_url = 'http://supervisor/core/api'
-     api_token = ''
-     intent_service_map = 'data/home_assistant/intent_service_map.toml'
+    [handle.home_assistant]
+    # URL for Home Assistant REST API
+    # https://developers.home-assistant.io/docs/api/rest
+    api_url = 'http://localhost:8123/api'
 
-        [handle.home_assistant.tts]
-        service = 'tts/marytts_say'
-        entities = { entity_id = 'media_player.vlc' }
+    # Long-lived access token generated from Home Assistant
+    api_token = ''
+
+    intent_service_maps = [
+        '{{ system_data_dir }}/home_assistant/intent_service_map.toml',
+        '{{ user_data_dir }}/home_assistant/intent_service_map.toml'
+    ]
+
+       [handle.home_assistant.tts]
+       # Example: 'tts/marytts_say'
+       service = ''
+
+       # Example: { entity_id = 'media_player.vlc' }
+       entities = {}
 
 # -----------------------------------------------------------------------------
 
+# Voice loop
+# Coordinates activity between other voice components.
+#
+# Defaults to a standard voice loop (see below).
 [loop]
 type = 'rhasspy_junior.loop.DefaultVoiceLoop'
 
     [loop.default]
+    # Runs the following loop:
+    # 1. Wake for hotword detection
+    # 2. Process speech to text until silence/timeout
+    # 3. Recognize intent from transcription
+    # 4. Pass intent to handler(s)
 
 # -----------------------------------------------------------------------------
 
+# Training
+# Generates custom speech to text and intent recognition models.
+#
 [train]
+# Class to load for training.
+# Must implement rhasspy_junior.train.Trainer
 type = 'rhasspy_junior.train.MultiTrainer'
 
     [train.multi]
-    types = ['rhasspy_junior.train.HomeAssistantTrainer', 'rhasspy_junior.train.FsticuffsTrainer']
+    # Classes to load and run in series.
+    # Must implement rhasspy_junior.train.Trainer
+    types = [
+        'rhasspy_junior.train.HomeAssistantTrainer',
+        'rhasspy_junior.train.FsticuffsTrainer'
+    ]
 
     [train.home_assistant]
-    api_url = 'http://supervisor/core/api'
+    # Loads entities from Home Assistant REST API and generates a fsticuffs
+    # template file.
+    # https://rhasspy.readthedocs.io/en/latest/training/#sentencesini
+
+    # URL for Home Assistant REST API
+    # https://developers.home-assistant.io/docs/api/rest
+    api_url = 'http://localhost:8123/api'
+
+    # Long-lived access token generated from Home Assistant
     api_token = ''
-    input_template = 'data/home_assistant/sentences.template.ini'
-    output_sentences = 'train/home_assistant/sentences.ini'
+
+    input_templates = ['{{ system_data_dir }}/home_assistant/sentences.template.ini']
+    output_sentences = '{{ user_train_dir }}/home_assistant/sentences.ini'
 
     [train.fsticuffs]
-    force_retrain = false
-    data_dir = 'data/stt_fsticuffs'
-    train_dir = 'train/stt_fsticuffs'
+    # Trains a custom speech to text model and intent recognizer from sentence templates.
+
+    # Directory with Kaldi model and pre-compiled binaries
+    data_dir = '{{ system_data_dir }}/stt_fsticuffs'
+
+    # Directory to write trained speech to text model
+    train_dir = '{{ user_train_dir }}/stt_fsticuffs'
+
+    # Kaldi model language
+    # Must be a directory under data_dir.
     language = 'en-us'
-    input_files = ['train/home_assistant/sentences.ini']
-    output_skip_hash = 'train/intent_fsticuffs/skip_hash.txt'
-    output_graph = 'train/intent_fsticuffs/graph.json'
+    input_files = ['{{ user_train_dir }}/home_assistant/sentences.ini']
+    output_skip_hash = '{{ user_train_dir }}/intent_fsticuffs/skip_hash.txt'
+
+    # Path to write intent recognizer JSON graph
+    output_graph = '{{ user_train_dir }}/intent_fsticuffs/graph.json'
+
+    # Lingua Franca language used to expand numbers into words (e.g. 1 -> one)
+    # https://github.com/mycroftAI/lingua-franca
     number_language = 'en'
+
+    # True if numbers should be automatically replaced with words
     replace_numbers = true
+
+    # Automatic casing applied to all words (keep, lower, upper)
     casing = 'lower'
+
+    # True if re-training should always happen, regardless of cache
+    force_retrain = false

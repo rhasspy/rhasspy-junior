@@ -17,12 +17,27 @@
 import argparse
 from pathlib import Path
 
+from xdgenvpy import XDG
+
 _DIR = Path(__file__).parent
+_REPO_DIR = _DIR.parent
 
 
 def get_args() -> argparse.Namespace:
     """Get command-line arguments"""
     parser = argparse.ArgumentParser()
+    add_shared_args(parser)
+    args = parser.parse_args()
+
+    # Convert to paths
+    args.config = [Path(p) for p in args.config]
+
+    return args
+
+
+def add_shared_args(parser: argparse.ArgumentParser):
+    """Add shared command-line arguments"""
+    xdg = XDG()
 
     parser.add_argument(
         "--config",
@@ -32,12 +47,21 @@ def get_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--debug", action="store_true", help="Print DEBUG messages to the console"
+        "--system-data-dir",
+        default=_REPO_DIR / "data",
+        help="Path to directory where system data is read",
+    )
+    parser.add_argument(
+        "--user-data-dir",
+        default=Path(xdg.XDG_DATA_HOME) / "rhasspy-junior" / "data",
+        help="Path to directory where user data is read",
+    )
+    parser.add_argument(
+        "--user-train-dir",
+        default=Path(xdg.XDG_CACHE_HOME) / "rhasspy-junior" / "train",
+        help="Path to directory where training data is written",
     )
 
-    args = parser.parse_args()
-
-    # Convert to paths
-    args.config = [Path(p) for p in args.config]
-
-    return args
+    parser.add_argument(
+        "--debug", action="store_true", help="Print DEBUG messages to the console"
+    )

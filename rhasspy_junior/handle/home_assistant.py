@@ -2,6 +2,7 @@
 import collections.abc
 import logging
 import typing
+from pathlib import Path
 
 import requests
 import toml
@@ -34,11 +35,18 @@ class HomeAssistantIntentHandler(IntentHandler):
         self.api_token = self.config["api_token"]
 
         # Load mapping from intents to Home Assistant services
-        intent_service_map_path = str(self.config["intent_service_map"])
-        with open(
-            intent_service_map_path, "r", encoding="utf-8"
-        ) as intent_service_map_file:
-            self.intent_service_map = toml.load(intent_service_map_file)
+        self.intent_service_map = {}
+        intent_service_map_paths = [Path(p) for p in self.config["intent_service_maps"]]
+
+        for service_map_path in intent_service_map_paths:
+            if not service_map_path.is_file():
+                _LOGGER.warning("Intent service map missing: %s", service_map_path)
+                continue
+
+            with open(
+                service_map_path, "r", encoding="utf-8"
+            ) as intent_service_map_file:
+                self.intent_service_map.update(toml.load(intent_service_map_file))
 
         self._handled = IntentHandleResult(handled=True)
         self._not_handled = IntentHandleResult(handled=False)

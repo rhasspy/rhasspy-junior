@@ -16,18 +16,26 @@
 
 import collections
 import logging
+import platform
 import typing
 from pathlib import Path
 
 import toml
+from jinja2 import Environment, FileSystemLoader
 
 _LOGGER = logging.getLogger(__package__)
 
 
 def load_configs(
-    config_paths: typing.Iterable[typing.Union[str, Path]]
+    config_paths: typing.Iterable[typing.Union[str, Path]],
+    system_data_dir: typing.Union[str, Path],
+    user_data_dir: typing.Union[str, Path],
+    user_train_dir: typing.Union[str, Path],
 ) -> typing.Dict[str, typing.Any]:
     config: typing.Dict[str, typing.Any] = {}
+    system_data_dir = Path(system_data_dir).absolute()
+    user_data_dir = Path(user_data_dir).absolute()
+    user_train_dir = Path(user_train_dir).absolute()
 
     for config_path in config_paths:
         config_path = Path(config_path)
@@ -36,9 +44,24 @@ def load_configs(
             continue
 
         _LOGGER.debug("Loading config %s", config_path)
-        with open(config_path, "r", encoding="utf-8") as config_file:
-            new_config = toml.load(config_file)
-            recursive_update(config, new_config)
+
+        # Pre-process with jinja2
+        template_env = Environment(
+            loader=FileSystemLoader(config_path.parent),
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
+        template = template_env.get_template(config_path.name)
+
+        new_config = toml.loads(
+            template.render(
+                system_data_dir=system_data_dir,
+                user_data_dir=user_data_dir,
+                user_train_dir=user_train_dir,
+                platform_machine=platform.machine(),
+            )
+        )
+        recursive_update(config, new_config)
 
     return config
 

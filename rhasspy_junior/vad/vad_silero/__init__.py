@@ -79,7 +79,6 @@ class SileroVoiceActivityDetector(VoiceActivityDetector):
             max_seconds=float(self.config["max_seconds"]),
             speech_seconds=float(self.config["speech_seconds"]),
             silence_seconds=float(self.config["silence_seconds"]),
-            before_seconds=float(self.config["before_seconds"]),
         )
 
     def stop(self):

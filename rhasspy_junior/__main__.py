@@ -40,7 +40,12 @@ def main():
     # Load default config first
     args.config.insert(0, DEFAULT_CONFIG_PATH)
 
-    config = load_configs(args.config)
+    config = load_configs(
+        args.config,
+        system_data_dir=args.system_data_dir,
+        user_data_dir=args.user_data_dir,
+        user_train_dir=args.user_train_dir,
+    )
     _LOGGER.debug(config)
 
     loop_config = config["loop"]

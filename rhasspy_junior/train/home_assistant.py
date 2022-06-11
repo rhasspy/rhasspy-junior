@@ -49,16 +49,19 @@ class HomeAssistantTrainer(Trainer):
         """Run trainer"""
         api_url = str(self.config["api_url"])
         api_token = str(self.config["api_token"])
-        input_template_path = Path(self.config["input_template"])
+        input_template_paths = [Path(p) for p in self.config["input_templates"]]
         output_sentences_path = Path(self.config["output_sentences"])
         entities_to_ignore = self.config.get("entities_to_ignore")
 
-        template_env = Environment(
-            loader=FileSystemLoader(input_template_path.parent),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-        template = template_env.get_template(input_template_path.name)
+        templates = []
+        for template_path in input_template_paths:
+            template_env = Environment(
+                loader=FileSystemLoader(template_path.parent),
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
+            template = template_env.get_template(template_path.name)
+            templates.append(template)
 
         output_sentences_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -113,14 +116,15 @@ class HomeAssistantTrainer(Trainer):
 
                 entities.append(entity)
 
-            output_sentences_file.write(
-                template.render(
-                    entities=entities,
-                    verb=self.verb,
-                    clean_name=self.clean_name,
-                    map=map,
+            for template in templates:
+                output_sentences_file.write(
+                    template.render(
+                        entities=entities,
+                        verb=self.verb,
+                        clean_name=self.clean_name,
+                        map=map,
+                    )
                 )
-            )
 
         return context
 

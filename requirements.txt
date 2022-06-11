@@ -1,4 +1,6 @@
-toml
+# Configuration
+toml>=0.10.2,<1
+xdgenvpy>=2.3.5,<3
 
 # Communication with Home Assistant
 requests>=2<3
