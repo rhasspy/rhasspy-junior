@@ -3,7 +3,7 @@
 !LICENSE
 !README.md
 !rhasspy_junior/**/*.py
-!junior.toml
+!rhasspy_junior/junior.toml
 !scripts/train.sh
 !scripts/run.sh
 !docker/run.sh
@@ -12,3 +12,4 @@
 !data/vad_silero/
 !data/wake_precise/
 !data/stt_fsticuffs/
+!data/home_assistant/

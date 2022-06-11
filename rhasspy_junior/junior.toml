@@ -96,7 +96,7 @@ type = 'rhasspy_junior.train.MultiTrainer'
     output_sentences = 'train/home_assistant/sentences.ini'
 
     [train.fsticuffs]
-    force_retrain = true
+    force_retrain = false
     data_dir = 'data/stt_fsticuffs'
     train_dir = 'train/stt_fsticuffs'
     language = 'en-us'

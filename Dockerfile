@@ -63,9 +63,10 @@ RUN cd data/stt_fsticuffs/kaldi/ && \
     if [ -d 'amd64' ]; then ln -s 'amd64' 'x86_64'; fi && \
     if [ -d 'arm64' ]; then ln -s 'arm64' 'aarch64'; fi
 
+COPY data/home_assistant/ ./data/home_assistant/
+
 # Copy code
 COPY rhasspy_junior/ ./rhasspy_junior/
-COPY junior.toml ./
 
 COPY scripts/ ./scripts/
 COPY docker/run.sh ./
