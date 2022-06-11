@@ -190,9 +190,14 @@ type = 'rhasspy_junior.handle.HomeAssistantIntentHandler'
     ]
 
        [handle.home_assistant.tts]
+       # Text to speech (TTS) service details for Home Assistant.
+       # Used to respond when intents return speech.
+
+       # TTS service path
        # Example: 'tts/marytts_say'
        service = ''
 
+       # Entities to pass to TTS service call
        # Example: { entity_id = 'media_player.vlc' }
        entities = {}
 

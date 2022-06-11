@@ -4,6 +4,26 @@ Simplified voice control for [Home Assistant](https://www.home-assistant.io/).
 
     "Hey Mycroft, turn on kitchen lights"
 
+## Training and Running
+
+Before trainig, create a local TOML configuration file with the following content:
+
+``` toml
+[train.home_assistant]
+api_url = '<home assistant url>'
+api_token = '<home assistant token>'
+
+[handle.home_assistant]
+api_url = '<home assistant url>'
+api_token = '<home assistant token>'
+```
+
+Replace `<home assistant url>` with something like `http://localhost:8123/api` and `<home assistant token>` with a long-lived access token.
+
+Run `scripts/train.sh --config your-local-config.toml` to train. This will load entities from your home assistant server and train a custom speech to text and intent recognizer model.
+
+Run `scripts/run.sh --config your-local-config.toml` to start Rhasspy Junior. You should now be able to say "Hey Mycroft, turn on the kitchen lights" (depending on what devices you have configured).
+
 
 ## Domains
 
