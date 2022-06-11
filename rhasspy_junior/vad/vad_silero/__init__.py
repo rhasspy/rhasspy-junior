@@ -16,7 +16,11 @@
 
 import typing
 
-from rhasspy_junior.vad.const import VoiceActivityDetector, VoiceActivityResult
+from rhasspy_junior.vad.const import (
+    VoiceActivityDetector,
+    VoiceActivityResult,
+    VoiceCommandState,
+)
 
 from .silence import SilenceDetector, SilenceResultType
 
@@ -32,8 +36,7 @@ class SileroVoiceActivityDetector(VoiceActivityDetector):
         super().__init__(root_config, config_extra_path=config_extra_path)
         self.detector: typing.Optional[SilenceDetector] = None
 
-        self._speech = VoiceActivityResult(is_speech=True)
-        self._silence = VoiceActivityResult(is_speech=False)
+        self._command_state: VoiceCommandState = VoiceCommandState.NOT_STARTED
 
     @classmethod
     def config_path(cls) -> str:
@@ -41,22 +44,27 @@ class SileroVoiceActivityDetector(VoiceActivityDetector):
 
     def begin_command(self):
         assert self.detector is not None
+        self._command_state = VoiceCommandState.NOT_STARTED
         self.detector.start()
 
     def process_chunk(self, chunk: bytes) -> VoiceActivityResult:
         """Process audio chunk"""
         assert self.detector is not None
         result = self.detector.process(chunk)
+        is_speech = False
 
-        if result.type == SilenceResultType.PHRASE_END:
+        if result.type == SilenceResultType.PHRASE_START:
             is_speech = True
-            is_end_of_command = True
+            self._command_state = VoiceCommandState.STARTED
+        elif result.type == SilenceResultType.PHRASE_END:
+            self._command_state = VoiceCommandState.ENDED
+        elif result.type == SilenceResultType.TIMEOUT:
+            self._command_state = VoiceCommandState.TIMEOUT
         else:
             is_speech = result.type == SilenceResultType.SPEECH
-            is_end_of_command = False
 
         return VoiceActivityResult(
-            is_speech=is_speech, is_end_of_command=is_end_of_command
+            is_speech=is_speech, command_state=self._command_state
         )
 
     def start(self):

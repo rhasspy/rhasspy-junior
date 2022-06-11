@@ -13,9 +13,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 import typing
 from abc import ABC, abstractmethod
+from pathlib import Path
+
+_DIR = Path(__file__).parent
+
+DEFAULT_CONFIG_PATH = _DIR / "junior.toml"
 
 
 class ConfigurableComponent(ABC):

@@ -61,9 +61,6 @@ class HomeAssistantIntentHandler(IntentHandler):
             )
             return self._not_handled
 
-        service_name = service_info["service"]
-        url = f"{self.api_url}/services/{service_name}"
-
         entity_map = {"entity_id": "entity_id"}
         service_entities = service_info.get("entities", {})
         if not isinstance(service_entities, collections.abc.Mapping):
@@ -77,12 +74,54 @@ class HomeAssistantIntentHandler(IntentHandler):
             if mapped_name is not None:
                 service_data[mapped_name] = entity.value
 
-        _LOGGER.debug("Posting data to %s: %s", url, service_data)
+        service_name = service_info.get("service")
 
-        requests.post(
-            url,
-            headers=headers,
-            json=service_data,
-        )
+        if service_name:
+            # Call service
+            url = f"{self.api_url}/services/{service_name}"
+
+            _LOGGER.debug("Calling service at %s: %s", url, service_data)
+            response = requests.post(
+                url,
+                headers=headers,
+                json=service_data,
+            )
+
+            if not response.ok:
+                _LOGGER.error("Error from %s: %s", url, response)
+                return self._not_handled
+        else:
+            # Handle as intent
+            url = f"{self.api_url}/intent/handle"
+            intent_data = {"name": intent_name, "data": service_data}
+
+            _LOGGER.debug("Posting intent to %s: %s", url, intent_data)
+            response = requests.post(
+                url,
+                headers=headers,
+                json=intent_data,
+            )
+
+            if not response.ok:
+                _LOGGER.error("Error from %s: %s", url, response)
+                return self._not_handled
+
+            response_dict = response.json()
+            _LOGGER.debug(response_dict)
+
+            # Handle TTS response
+            response_speech = (
+                response_dict.get("speech", {}).get("plain", {}).get("speech")
+            )
+            if response_speech:
+                tts_service_info = self.config.get("tts", {})
+                tts_service = tts_service_info.get("service")
+                if tts_service:
+                    tts_data = tts_service_info.get("entities", {})
+                    tts_data["message"] = response_speech
+
+                    tts_url = f"{self.api_url}/services/{tts_service}"
+                    _LOGGER.debug("Posting speech to %s: %s", tts_url, tts_data)
+                    requests.post(tts_url, headers=headers, json=tts_data)
 
         return self._handled

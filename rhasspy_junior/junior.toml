@@ -30,7 +30,7 @@ type = 'rhasspy_junior.vad.SileroVoiceActivityDetector'
     chunk_size = 960
     skip_seconds = 0
     min_seconds = 1
-    max_seconds = 30
+    max_seconds = 10
     speech_seconds = 0.3
     silence_seconds = 0.5
     before_seconds = 0.5
@@ -70,6 +70,10 @@ type = 'rhasspy_junior.handle.HomeAssistantIntentHandler'
      api_token = ''
      intent_service_map = 'data/home_assistant/intent_service_map.toml'
 
+        [handle.home_assistant.tts]
+        service = 'tts/marytts_say'
+        entities = { entity_id = 'media_player.vlc' }
+
 # -----------------------------------------------------------------------------
 
 [loop]
@@ -92,6 +96,7 @@ type = 'rhasspy_junior.train.MultiTrainer'
     output_sentences = 'train/home_assistant/sentences.ini'
 
     [train.fsticuffs]
+    force_retrain = true
     data_dir = 'data/stt_fsticuffs'
     train_dir = 'train/stt_fsticuffs'
     language = 'en-us'

@@ -13,13 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 import logging
 import typing
 
-from ..config import load_configs
-from ..train import Trainer, TrainingContext
-from ..utils import load_class
+from rhasspy_junior.config import load_configs
+from rhasspy_junior.const import DEFAULT_CONFIG_PATH
+from rhasspy_junior.train import Trainer, TrainingContext
+from rhasspy_junior.utils import load_class
+
 from .args import get_args
 
 _LOGGER = logging.getLogger(__package__)
@@ -35,6 +36,9 @@ def main():
         logging.basicConfig(level=logging.INFO)
 
     _LOGGER.debug(args)
+
+    # Load default config first
+    args.config.insert(0, DEFAULT_CONFIG_PATH)
 
     config = load_configs(args.config)
     _LOGGER.debug(config)

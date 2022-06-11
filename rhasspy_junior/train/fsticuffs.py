@@ -71,13 +71,14 @@ class FsticuffsTrainer(Trainer):
         casing = str(self.config["casing"])
         number_language = str(self.config["number_language"])
         replace_numbers = bool(self.config["replace_numbers"])
+        force_retrain = bool(self.config["force_retrain"])
 
         input_files = [Path(v) for v in self.config["input_files"]]
 
         output_skip_hash_path = Path(str(self.config["output_skip_hash"]))
         actual_hash = self.compute_ini_hash(input_files)
 
-        if output_skip_hash_path.is_file():
+        if (not force_retrain) and output_skip_hash_path.is_file():
             # Check if training can be skipped
             expected_hash = output_skip_hash_path.read_text(encoding="utf-8").strip()
 

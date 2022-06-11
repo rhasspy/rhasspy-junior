@@ -27,7 +27,7 @@ from rhasspy_junior.loop.const import VoiceLoop
 from rhasspy_junior.mic.const import Microphone
 from rhasspy_junior.stt.const import SpeechToText, SpeechToTextRequest
 from rhasspy_junior.utils import load_class
-from rhasspy_junior.vad.const import VoiceActivityDetector
+from rhasspy_junior.vad.const import VoiceActivityDetector, VoiceCommandState
 
 _LOGGER = logging.getLogger(__package__)
 
@@ -130,36 +130,51 @@ class DefaultVoiceLoop(VoiceLoop):
 
             try:
                 if state == State.DETECTING_HOTWORD:
+                    # Process audio until hotword detection
                     hotword_result = self.hotword.process_chunk(chunk)
                     if hotword_result.is_detected:
                         _LOGGER.debug("Hotword detected")
                         state = State.RECORDING_COMMAND
                         self.vad.begin_command()
                         self.stt.begin_speech(SpeechToTextRequest())
+
+                        # Include current audio chunk in STT
+                        self.stt.process_chunk(chunk)
                 elif state == State.RECORDING_COMMAND:
+                    # Recording/transcribing voice command
                     self.stt.process_chunk(chunk)
                     vad_result = self.vad.process_chunk(chunk)
-                    if vad_result.is_end_of_command:
+                    if vad_result.command_state in {
+                        VoiceCommandState.ENDED,
+                        VoiceCommandState.TIMEOUT,
+                    }:
                         _LOGGER.debug("Recording ended")
                         stt_result = self.stt.end_speech()
-                        if stt_result is not None:
-                            intent_result = self.intent.recognize(
-                                IntentRequest(text=stt_result.text)
-                            )
-                            if intent_result is not None:
-                                # handle
-                                state = State.HANDLING_INTENT
-                                _LOGGER.debug(intent_result)
 
-                                handle_result = self.handle.run(
-                                    IntentHandleRequest(intent_result=intent_result)
+                        if vad_result.command_state == VoiceCommandState.ENDED:
+                            # Successful recording
+                            if stt_result is not None:
+                                intent_result = self.intent.recognize(
+                                    IntentRequest(text=stt_result.text)
                                 )
-                                _LOGGER.debug(handle_result)
-                            else:
-                                _LOGGER.warning("No intent recognized")
-                        else:
-                            _LOGGER.warning("No speech transcribed")
+                                if intent_result is not None:
+                                    # handle
+                                    state = State.HANDLING_INTENT
+                                    _LOGGER.debug(intent_result)
 
+                                    handle_result = self.handle.run(
+                                        IntentHandleRequest(intent_result=intent_result)
+                                    )
+                                    _LOGGER.debug(handle_result)
+                                else:
+                                    _LOGGER.warning("No intent recognized")
+                            else:
+                                _LOGGER.warning("No speech transcribed")
+                        else:
+                            # Timeout
+                            _LOGGER.warning("Recording timeout")
+
+                        # Reset
                         self._drain_mic_queue()
                         state = State.DETECTING_HOTWORD
             except Exception:

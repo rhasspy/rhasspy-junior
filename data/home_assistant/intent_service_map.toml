@@ -4,6 +4,8 @@ service = 'cover/open_cover'
 [HassCloseCover]
 service = 'cover/close_cover'
 
+[HassCoverGetState]
+
 # -----------------------------------------------------------------------------
 
 [HassTurnOnSwitch]
@@ -15,6 +17,8 @@ service = 'switch/turn_off'
 [HassToggleSwitch]
 service = 'switch/toggle'
 
+[HassSwitchGetState]
+
 # -----------------------------------------------------------------------------
 
 [HassTurnOnLight]
@@ -22,6 +26,9 @@ service = 'light/turn_on'
 
 [HassTurnOffLight]
 service = 'light/turn_off'
+
+[HassLightGetState]
+entities = ['verb']
 
 # -----------------------------------------------------------------------------
 
@@ -40,6 +47,8 @@ service = 'lock/lock'
 
 [HassUnlock]
 service = 'lock/unlock'
+
+[HassLockGetState]
 
 # -----------------------------------------------------------------------------
 
@@ -61,15 +70,25 @@ service = 'fan/turn_off'
 service = 'fan/set_percentage'
 entities = ['percentage']
 
+[HassFanGetSpeed]
+
 # -----------------------------------------------------------------------------
 
-[HassClimateTemperature]
+[HassTurnOnClimate]
+service = 'climate/turn_on'
+
+[HassTurnOffClimate]
+service = 'climate/turn_off'
+
+[HassClimateSetTemperature]
 service = 'climate/set_temperature'
 entities = ['temperature']
 
 [HassClimateSetPresetMode]
 service = 'climate/set_preset_mode'
 entities = ['preset_mode']
+
+[HassClimateGetTemperature]
 
 # -----------------------------------------------------------------------------
 
@@ -86,3 +105,9 @@ entities = ['mode']
 [HassHumidifierSetHumidity]
 service = 'humidifier/set_humidity'
 entities = ['humidity']
+
+[HassHumidifierGetHumidity]
+
+# -----------------------------------------------------------------------------
+
+[HassSensorGetState]

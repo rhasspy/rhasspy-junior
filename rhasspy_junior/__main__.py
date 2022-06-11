@@ -19,6 +19,7 @@ import typing
 
 from .args import get_args
 from .config import load_configs
+from .const import DEFAULT_CONFIG_PATH
 from .loop import VoiceLoop
 from .utils import load_class
 
@@ -35,6 +36,9 @@ def main():
         logging.basicConfig(level=logging.INFO)
 
     _LOGGER.debug(args)
+
+    # Load default config first
+    args.config.insert(0, DEFAULT_CONFIG_PATH)
 
     config = load_configs(args.config)
     _LOGGER.debug(config)

@@ -17,14 +17,22 @@
 import typing
 from abc import abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 
 from rhasspy_junior.const import ConfigurableComponent
+
+
+class VoiceCommandState(str, Enum):
+    NOT_STARTED = "not_started"
+    STARTED = "started"
+    ENDED = "ended"
+    TIMEOUT = "timeout"
 
 
 @dataclass
 class VoiceActivityResult:
     is_speech: bool
-    is_end_of_command: bool = False
+    command_state: VoiceCommandState
 
 
 class VoiceActivityDetector(ConfigurableComponent):
