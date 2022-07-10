@@ -329,6 +329,7 @@ def parse_expression(
     literal: str = ""
     last_taggable: typing.Optional[Taggable] = None
     last_group: typing.Optional[Sequence] = root
+    escape_depth: int = 0
 
     # Process text character-by-character
     for current_index, c in enumerate(text):
@@ -342,6 +343,16 @@ def parse_expression(
             last_c = text[current_index - 1]
         else:
             last_c = ""
+
+        # Handle escaped characters (e.g., "\\" and "\(")
+        if escape_depth > 0:
+            literal += c
+            escape_depth -= 1
+            continue
+
+        if c == "\\":
+            escape_depth += 1
+            continue
 
         next_index = current_index + 1
 
@@ -496,7 +507,9 @@ def parse_expression(
                     )
                     next_index = end_index + current_index
 
-                    group.text = text[current_index + 1 : next_index - 1]
+                    group.text = remove_escapes(
+                        text[current_index + 1 : next_index - 1]
+                    )
                     last_group.items.append(group)
                     last_taggable = group
             elif c == "[":
@@ -530,13 +543,15 @@ def parse_expression(
                         optional.items.extend(optional_seq.items)
                     else:
                         # Keep inner group
-                        optional_seq.text = text[current_index + 1 : next_index - 1]
+                        optional_seq.text = remove_escapes(
+                            text[current_index + 1 : next_index - 1]
+                        )
 
                         optional.items.append(optional_seq)
 
                 # Empty alternative
                 optional.items.append(Word(text=""))
-                optional.text = text[current_index + 1 : next_index - 1]
+                optional.text = remove_escapes(text[current_index + 1 : next_index - 1])
 
                 assert last_group is not None, parse_error(
                     "Expected group preceeding optional",
@@ -572,7 +587,7 @@ def parse_expression(
                 next_index = end_index + current_index
 
                 # Exclude {}
-                tag.tag_text = text[current_index + 1 : next_index - 1]
+                tag.tag_text = remove_escapes(text[current_index + 1 : next_index - 1])
 
                 # Handle substitution/converter(s)
                 if "!" in tag.tag_text:
@@ -689,3 +704,8 @@ def parse_error(
         return f"{error} (text='{text}', file={metadata.file_name}, column={column}, line={metadata.line_number})"
 
     return error
+
+
+def remove_escapes(text: str) -> str:
+    """Remove backslash escape sequences"""
+    return re.sub(r"\\(.)", r"\1", text)

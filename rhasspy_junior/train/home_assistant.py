@@ -17,6 +17,7 @@
 """Loads entities from Home Assistant API and generates intents"""
 
 import logging
+import re
 import typing
 from dataclasses import dataclass
 from pathlib import Path
@@ -98,8 +99,8 @@ class HomeAssistantTrainer(Trainer):
                     _LOGGER.warning("Skipping entity %s: no domain", entity_id)
                     continue
 
-                friendly_name = entity_state.get("attributes", {}).get(
-                    "friendly_name", ""
+                friendly_name = self.clean_name(
+                    entity_state.get("attributes", {}).get("friendly_name", "")
                 )
                 if not friendly_name:
                     # No friendly name
@@ -110,7 +111,7 @@ class HomeAssistantTrainer(Trainer):
                     id=entity_id,
                     domain=entity_id.split(".", maxsplit=1)[0],
                     name=friendly_name,
-                    spoken_name=self.clean_name(friendly_name),
+                    spoken_name=friendly_name,
                     state=entity_state,
                 )
 
@@ -141,5 +142,8 @@ class HomeAssistantTrainer(Trainer):
             name = " ".join(list(name))
 
         name = name.replace("_", " ")
+
+        # Escape parentheses, etc.
+        name = re.sub(r"([()\[\]{}<>])", r"\\\1", name)
 
         return name
