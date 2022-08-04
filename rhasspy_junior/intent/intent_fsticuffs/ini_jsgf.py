@@ -111,7 +111,7 @@ def parse_ini(
                     sentence = k.strip()
 
                     # Fix \[ escape sequence
-                    sentence = sentence.replace("\\[", "[")
+                    sentence = re.sub("^\\[", "[", sentence)
 
                     if sentence_transform:
                         # Do transform
